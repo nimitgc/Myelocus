@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Myelocus">
+<title>Myelocus</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <header class="hdr">
+    <div class="logo">
+      <div class="logo-m">M</div>
+      <div><div class="logo-t">Myelocus</div><div class="logo-s">Build your neural edge</div></div>
+    </div>
+    <div class="hdr-c">
+      <div class="chip"><div class="pdot" id="pdot"></div><span id="cdown">—</span></div>
+    </div>
+    <div class="hdr-r">
+      <div class="streak" id="streak">🔥 0 days</div>
+      <button class="ibtn" onclick="UI.toggleTheme()" id="tbtn" title="Theme">☀</button>
+      <button class="ibtn" onclick="UI.go('onboard')" title="Bulk onboard">⊕</button>
+      <button class="ibtn" onclick="UI.go('settings')" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="nlbl">Study</div>
+    <button class="nitem active" id="nav-today" onclick="UI.go('today')">
+      <span>⊙</span> Today's queue <span class="npct" id="ndue"></span>
+    </button>
+    <div class="nlbl">Syllabus</div>
+    <button class="nitem" id="nav-gs1" onclick="UI.goPaper('gs1')"><span class="ndot" style="background:#6366f1"></span>GS 1<span class="npct" id="np-gs1">0%</span></button>
+    <button class="nitem" id="nav-gs2" onclick="UI.goPaper('gs2')"><span class="ndot" style="background:#22c55e"></span>GS 2<span class="npct" id="np-gs2">0%</span></button>
+    <button class="nitem" id="nav-gs3" onclick="UI.goPaper('gs3')"><span class="ndot" style="background:#f59e0b"></span>GS 3<span class="npct" id="np-gs3">0%</span></button>
+    <button class="nitem" id="nav-gs4" onclick="UI.goPaper('gs4')"><span class="ndot" style="background:#a78bfa"></span>GS 4<span class="npct" id="np-gs4">0%</span></button>
+    <button class="nitem" id="nav-prelims" onclick="UI.goPaper('prelims')"><span class="ndot" style="background:#f43f5e"></span>Prelims<span class="npct" id="np-prelims">0%</span></button>
+    <button class="nitem" id="nav-optional" onclick="UI.goPaper('optional')"><span class="ndot" style="background:#06b6d4"></span>Optional<span class="npct" id="np-optional">0%</span></button>
+    <div class="nlbl">Insights</div>
+    <button class="nitem" id="nav-gaps" onclick="UI.go('gaps')"><span>◈</span>Gap analysis</button>
+    <button class="nitem" id="nav-plan" onclick="UI.go('plan')"><span>⊞</span>Battle plan</button>
+    <button class="nitem" id="nav-stats" onclick="UI.go('stats')"><span>◎</span>Stats</button>
+  </nav>
+
+  <main class="main" id="main">
+    <div class="page active" id="page-today"><div id="c-today"></div></div>
+    <div class="page" id="page-syllabus"><div id="c-syllabus"></div></div>
+    <div class="page" id="page-gaps"><div id="c-gaps"></div></div>
+    <div class="page" id="page-plan"><div id="c-plan"></div></div>
+    <div class="page" id="page-stats"><div id="c-stats"></div></div>
+    <div class="page" id="page-onboard"><div id="c-onboard"></div></div>
+    <div class="page" id="page-settings"><div id="c-settings"></div></div>
+  </main>
+</div>
+
+<nav class="bnav">
+  <button class="bni active" id="bnav-today" onclick="UI.go('today')"><span class="bnic">⊙</span><span>Today</span></button>
+  <button class="bni" id="bnav-syllabus" onclick="UI.goPaper('gs1')"><span class="bnic">⊞</span><span>Syllabus</span></button>
+  <button class="bni" id="bnav-gaps" onclick="UI.go('gaps')"><span class="bnic">◈</span><span>Gaps</span></button>
+  <button class="bni" id="bnav-plan" onclick="UI.go('plan')"><span class="bnic">◎</span><span>Plan</span></button>
+  <button class="bni" id="bnav-onboard" onclick="UI.go('onboard')"><span class="bnic">⊕</span><span>Onboard</span></button>
+</nav>
+
+<div class="overlay" id="doverlay" onclick="UI.closeDr(event)">
+  <div class="drawer"><button class="dclose" onclick="UI.closeDr()">✕</button><div id="dcontent"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="syllabus.js"></script>
+<script src="app.js"></script>
+<script>
+const UI = {
+  page: 'today', paper: 'gs1', year: 2027,
+  queue: [], cardStates: {},
+
+  init() {
+    DB.load(); Additions.load();
+    this.year = DB.settings.targetYear || 2027;
+    const th = DB.settings.theme || 'dark';
+    document.documentElement.setAttribute('data-theme', th);
+    document.getElementById('tbtn').textContent = th === 'dark' ? '☀' : '☾';
+    this.queue = Queue.build(DB.settings.dailyTarget || 6);
+    this.initStates();
+    this.refresh();
+    this.rToday();
+  },
+
+  initStates() {
+    this.cardStates = {};
+    this.queue.forEach((_, i) => { this.cardStates[i] = { done: false, score: null, open: false }; });
+  },
+
+  refresh() {
+    const pace = Plan.pace(this.year);
+    const days = Plan.daysToExam(this.year);
+    const streak = DB.settings.streak || 0;
+    document.getElementById('cdown').innerHTML = `<strong>${days}</strong> days to Prelims ${this.year}`;
+    document.getElementById('pdot').className = `pdot ${pace.status}`;
+    document.getElementById('streak').textContent = `🔥 ${streak} day${streak !== 1 ? 's' : ''}`;
+    const due = Queue.stats().due;
+    document.getElementById('ndue').textContent = due > 0 ? due : '';
+    PAPER_ORDER.forEach(p => {
+      const el = document.getElementById(`np-${p}`);
+      if (el) el.textContent = Analytics.paperCoverage(p) + '%';
+    });
+  },
+
+  go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nitem,.bni').forEach(n => n.classList.remove('active'));
+    const pel = document.getElementById(`page-${page}`);
+    if (pel) pel.classList.add('active');
+    document.getElementById(`nav-${page}`)?.classList.add('active');
+    document.getElementById(`bnav-${page}`)?.classList.add('active');
+    this.page = page;
+    const m = document.getElementById('main');
+    if (m) m.scrollTop = 0;
+    if (page === 'today') this.rToday();
+    else if (page === 'gaps') this.rGaps();
+    else if (page === 'plan') this.rPlan();
+    else if (page === 'stats') this.rStats();
+    else if (page === 'onboard') this.rOnboard();
+    else if (page === 'settings') this.rSettings();
+  },
+
+  goPaper(p) {
+    this.paper = p;
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.querySelectorAll('.nitem,.bni').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-syllabus')?.classList.add('active');
+    document.getElementById(`nav-${p}`)?.classList.add('active');
+    document.getElementById('bnav-syllabus')?.classList.add('active');
+    this.page = 'syllabus';
+    const m = document.getElementById('main');
+    if (m) m.scrollTop = 0;
+    this.rSyllabus();
+  },
+
+  toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('tbtn').textContent = next === 'dark' ? '☀' : '☾';
+    DB.settings.theme = next; DB.save();
+  },
+
+  toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  },
+
+  // ── TODAY ────────────────────────────────────────────────────────────────────
+  rToday() {
+    const target = DB.settings.dailyTarget || 6;
+    const total = this.queue.length;
+    const doneCount = Object.values(this.cardStates).filter(s => s.done).length;
+    const pct = total > 0 ? Math.round(doneCount / total * 100) : 0;
+    const circ = 2 * Math.PI * 18;
+    const offset = circ - (pct / 100) * circ;
+    const phase = Plan.current(this.year);
+    const pace = Plan.pace(this.year);
+    const wd = Plan.weekDone();
+    const wt = phase?.weekly || 6;
+    const stats = Queue.stats();
+    const SC = ['','#ef4444','#f59e0b','#3b82f6','#22c55e'];
+    const SL = ['','Again','Hard','Good','Easy'];
+
+    let qH = '';
+    if (total === 0) {
+      qH = `<div style="text-align:center;padding:40px 20px;color:var(--text3)">
+        <div style="font-size:32px;margin-bottom:12px">◎</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">No topics due today</div>
+        <div style="font-size:13px">SRS schedule is clear. Browse the Syllabus map to study something new.</div>
+      </div>`;
+    } else {
+      if (doneCount >= total) {
+        const streak = DB.settings.streak || 0;
+        qH += `<div class="done-scr">
+          <div class="done-icon">◎</div>
+          <div class="done-t">Session complete</div>
+          <div class="done-s">All ${doneCount} topics done today. The pathways strengthen.</div>
+          <div class="done-stats">
+            <div class="ds"><div class="dsv" style="color:var(--accent)">${doneCount}</div><div class="dsl">Today</div></div>
+            <div class="ds"><div class="dsv" style="color:var(--amber)">🔥${streak}</div><div class="dsl">Streak</div></div>
+            <div class="ds"><div class="dsv" style="color:var(--green)">${stats.strong}</div><div class="dsl">Strong</div></div>
+          </div>
+          <button class="btn btn-g" onclick="UI.queue=Queue.build(${target});UI.initStates();UI.rToday();">Load more topics</button>
+        </div>`;
+      }
+      this.queue.forEach((item, idx) => {
+        const st = this.cardStates[idx] || { done: false, score: null, open: false };
+        const isNew = SRS.isNew(item.rec);
+        const info = SYLLABUS[item.paper];
+        const bstyle = st.done ? 'border-color:var(--green)' : st.open ? 'border-color:var(--accent)' : '';
+        const nstyle = st.done ? 'background:var(--gbg);color:var(--green)' : st.open ? 'background:var(--abg);color:var(--accent2)' : '';
+
+        qH += `<div class="qcard" style="${bstyle}" id="qc${idx}">
+          <div class="qcard-hd" onclick="UI.toggleCard(${idx})">
+            <div class="qnum" style="${nstyle}">${st.done ? '✓' : idx + 1}</div>
+            <div class="qtopic">${item.topic}${item.isAddition ? ' <span style="font-size:10px;color:var(--cyan)">[+]</span>' : ''}</div>
+            <span class="qpaper" style="background:${info.color}20;color:${info.color}">${info.label}</span>
+            ${st.done && st.score
+              ? `<span style="font-size:11px;font-weight:600;color:${SC[st.score]}">${SL[st.score]}</span>`
+              : `<span class="qtype">${isNew ? 'New' : 'Review'}</span>`}
+            <span class="qarr">${st.open ? '▴' : '▾'}</span>
+          </div>
+          ${st.open ? `<div class="qbody">
+            ${isNew && !st.done ? `
+              <div class="study-msg">Go study this topic — NCERT, coaching notes, or any source you use. Come back and mark it done.</div>
+              <button class="study-btn" onclick="UI.markDone(${idx})">✓ Done — I have studied this</button>` : ''}
+            ${!isNew || st.done ? `
+              <div class="rate-lbl">${st.done ? 'Change rating:' : 'Recall without notes — how well did you remember?'}</div>
+              <div class="rate-btns">
+                <button class="rbtn ag ${st.score===1?'sel':''}" onclick="UI.rate(${idx},1)">Again<span>Blank</span></button>
+                <button class="rbtn hd ${st.score===2?'sel':''}" onclick="UI.rate(${idx},2)">Hard<span>Gaps</span></button>
+                <button class="rbtn gd ${st.score===3?'sel':''}" onclick="UI.rate(${idx},3)">Good<span>Effort</span></button>
+                <button class="rbtn ez ${st.score===4?'sel':''}" onclick="UI.rate(${idx},4)">Easy<span>Instant</span></button>
+              </div>` : ''}
+            <button class="btn btn-g btn-sm" onclick="event.stopPropagation();UI.openDr('${item.paper}',${item.si},${item.ti})">Notes & sources</button>
+          </div>` : ''}
+        </div>`;
+      });
+    }
+
+    document.getElementById('c-today').innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:18px">
+      <div class="ph">Today's session</div>
+      <div class="ps">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
+    </div>
+    <div class="today-grid">
+      <div>
+        <div class="qhdr">
+          <div class="ring-w">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--accent)" stroke-width="4"
+                stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
+                transform="rotate(-90 22 22)" style="transition:stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div class="ring-i"><h4>${doneCount} / ${total} done</h4><p>Interleaved · target ${target}</p></div>
+          </div>
+          <button class="btn btn-g btn-sm" onclick="UI.queue=Queue.build(${target});UI.initStates();UI.rToday();">↺ Refresh</button>
+        </div>
+        ${qH}
+      </div>
+      <div class="sstack">
+        <div class="scard">
+          <div class="stitle">Current phase</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">${phase?.name||'—'}</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5">${phase?.goal||''}</div>
+          <div class="neuro">⚡ ${phase?.neuro||''}</div>
+        </div>
+        <div class="scard">
+          <div class="stitle">This week</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+            <span style="font-size:20px;font-weight:700">${wd}</span>
+            <span style="font-size:11px;color:var(--text3)">target: ${wt}</span>
+          </div>
+          <div class="btrack"><div class="bfill" style="width:${Math.min(100,Math.round(wd/Math.max(wt,1)*100))}%;background:var(--accent)"></div></div>
+        </div>
+        <div class="scard">
+          <div class="stitle">Pace check</div>
+          <div class="pline"><span class="lbl">Days to exam</span><span class="val">${pace.daysLeft}</span></div>
+          <div class="pline"><span class="lbl">Unseen topics</span><span class="val">${pace.unseen}</span></div>
+          <div class="pline"><span class="lbl">Status</span><span class="val ${pace.status}">${pace.status.replace('-',' ')}</span></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">${pace.msg}</div>
+        </div>
+        <div class="scard">
+          <div class="stitle">Today</div>
+          <div style="display:flex;gap:12px">
+            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--red)">${stats.overdue}</div><div style="font-size:11px;color:var(--text3)">overdue</div></div>
+            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--amber)">${Math.max(0,stats.due-stats.overdue)}</div><div style="font-size:11px;color:var(--text3)">due</div></div>
+            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--green)">${stats.strong}</div><div style="font-size:11px;color:var(--text3)">strong</div></div>
+            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--text3)">${stats.unseen}</div><div style="font-size:11px;color:var(--text3)">unseen</div></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  toggleCard(idx) {
+    const wasOpen = this.cardStates[idx]?.open;
+    Object.keys(this.cardStates).forEach(k => { this.cardStates[k].open = false; });
+    if (this.cardStates[idx]) this.cardStates[idx].open = !wasOpen;
+    this.rToday();
+  },
+
+  markDone(idx) {
+    const item = this.queue[idx]; if (!item) return;
+    const rec = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
+    const updated = SRS.review({ ...rec, firstStudied: todayStr() }, 3);
+    DB.setRecord(item.paper, item.si, item.ti, updated);
+    this.cardStates[idx] = { done: true, score: 3, open: false };
+    this.refresh(); this.rToday(); this.toast('Studied ✓');
+  },
+
+  rate(idx, score) {
+    const item = this.queue[idx]; if (!item) return;
+    const rec = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
+    const updated = SRS.review(rec, score);
+    DB.setRecord(item.paper, item.si, item.ti, updated);
+    this.cardStates[idx] = { done: true, score, open: false };
+    this.refresh(); this.rToday();
+    const L = ['','Again — see you tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated'];
+    this.toast(L[score]);
+  },
+
+  // ── SYLLABUS ─────────────────────────────────────────────────────────────────
+  rSyllabus() {
+    const p = this.paper, info = SYLLABUS[p];
+    const cov = Analytics.paperCoverage(p), str = Analytics.paperStrength(p);
+    let h = `
+    <div style="margin-bottom:14px">
+      <div class="ph">${info.label} — <span style="font-weight:400;font-size:16px">${info.full}</span></div>
+      <div class="ps" style="margin-top:4px">Coverage ${cov}% · Avg strength ${str}%</div>
+    </div>
+    <div class="ptabs">
+      ${PAPER_ORDER.map(pp => `<button class="ptab ${pp===p?'active':''}" style="${pp===p?'background:'+SYLLABUS[pp].color+';border-color:'+SYLLABUS[pp].color+';color:#fff':''}" onclick="UI.goPaper('${pp}')">${SYLLABUS[pp].label}</button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px"><span style="color:var(--cyan)">●</span> Cyan = your addition · Click row to open detail · Click header to expand</div>`;
+
+    info.subjects.forEach((subj, si) => {
+      const all = [...subj.topics, ...(subj.additions || [])];
+      const covered = all.filter((_, ti) => DB.getRecord(p, si, ti)?.firstStudied).length;
+      const pct = all.length ? Math.round(covered / all.length * 100) : 0;
+      const ch = DB.getCoaching(p, subj.name);
+      const cpct = ch.total > 0 ? Math.round(ch.completed / ch.total * 100) : 0;
+
+      h += `<div class="sblock">
+        <div class="shdr" onclick="UI.togSub('ss-${p}-${si}','sa-${p}-${si}')">
+          <span class="sname">${subj.name}</span>
+          <div class="smeta">
+            <div class="psm"><div class="psmf" style="width:${pct}%;background:${info.color}"></div></div>
+            <span class="spct" style="color:${info.color}">${covered}/${all.length}</span>
+            <span class="sarr" id="sa-${p}-${si}">▾</span>
+          </div>
+        </div>
+        <div id="ss-${p}-${si}" style="display:none">
+          <div class="lrow">
+            <span class="llbl">🎓 Coaching lectures</span>
+            <div class="linps">
+              <input class="linp linp-w" type="text" placeholder="Academy name" value="${ch.academy||''}"
+                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'academy')">
+              <input class="linp" type="number" min="0" placeholder="Total" value="${ch.total||''}"
+                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'total')">
+              <span class="lpct">/</span>
+              <input class="linp" type="number" min="0" placeholder="Done" value="${ch.completed||''}"
+                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'completed')">
+              ${ch.total > 0 ? `<span class="lpct">${cpct}%</span>` : ''}
+            </div>
+          </div>
+          <table class="ttbl">
+            <thead><tr style="background:var(--bg3)">
+              <td style="padding:6px 16px;font-size:11px;color:var(--text3);font-weight:600">Topic</td>
+              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:90px">Status</td>
+              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:55px">PYQ</td>
+              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:80px">Strength</td>
+            </tr></thead>
+            <tbody>
+              ${subj.topics.map((t, ti) => this.tRow(p, si, ti, t, false, info.color)).join('')}
+              ${(subj.additions||[]).map((t, ai) => this.tRow(p, si, subj.topics.length + ai, t, true, info.color)).join('')}
+            </tbody>
+          </table>
+          <div class="addrow">
+            <div class="addform">
+              <input class="field" type="text" id="ai-${p}-${si}" placeholder="Add your own topic under this subject..."
+                onkeydown="if(event.key==='Enter')UI.addTopic('${p}',${si})">
+              <button class="btn btn-g btn-sm" onclick="UI.addTopic('${p}',${si})">+ Add</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    document.getElementById('c-syllabus').innerHTML = h;
+  },
+
+  tRow(p, si, ti, topic, isAdd, color) {
+    const rec = DB.getRecord(p, si, ti);
+    const str = SRS.strength(rec);
+    let badge, bc;
+    if (!rec?.firstStudied) { badge = 'Unseen'; bc = 'b-new'; }
+    else if (rec.nextReview && rec.nextReview < todayStr()) { badge = 'Due'; bc = 'b-due'; }
+    else if (rec.repetitions < 2) { badge = 'Studying'; bc = 'b-studying'; }
+    else if (rec.lastScore <= 2) { badge = 'Fragile'; bc = 'b-review'; }
+    else { badge = 'Strong'; bc = 'b-strong'; }
+    if (isAdd) bc = 'b-add';
+    const pv = rec?.pyqSeen || '';
+    return `<tr onclick="UI.openDr('${p}',${si},${ti})">
+      <td class="tname">${isAdd ? '<span style="color:var(--cyan);font-size:10px">+</span> ' : ''}${topic}</td>
+      <td><span class="tbadge ${bc}">${badge}</span></td>
+      <td>${pv ? `<span class="pyq-swatch" style="background:${pyqColor(pv)}"></span><span style="font-size:11px;color:var(--text2)">${pv}%</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+      <td><div class="smini"><div class="sminif" style="width:${str}%;background:${color}"></div></div></td>
+    </tr>`;
+  },
+
+  togSub(id, aid) {
+    const el = document.getElementById(id), ar = document.getElementById(aid);
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'block';
+    if (ar) ar.textContent = open ? '▾' : '▴';
+  },
+
+  saveCoach(p, name, el, field) {
+    const c = DB.getCoaching(p, name);
+    c[field] = field === 'academy' ? el.value : parseInt(el.value) || 0;
+    DB.setCoaching(p, name, c);
+  },
+
+  addTopic(p, si) {
+    const inp = document.getElementById(`ai-${p}-${si}`);
+    const t = inp?.value?.trim(); if (!t) return;
+    Additions.add(p, si, t); inp.value = '';
+    this.rSyllabus(); this.toast('Topic added ✓');
+  },
+
+  // ── DRAWER ───────────────────────────────────────────────────────────────────
+  openDr(p, si, ti) {
+    const subj = SYLLABUS[p].subjects[si];
+    const all = [...subj.topics, ...(subj.additions || [])];
+    const topic = all[ti];
+    const isAdd = ti >= subj.topics.length;
+    const rec = DB.getRecord(p, si, ti) || SRS.newRecord();
+    const info = SYLLABUS[p];
+
+    document.getElementById('dcontent').innerHTML = `
+    <div class="dpaper" style="color:${info.color}">${info.label} · ${subj.name}${isAdd ? ' · <span style="color:var(--cyan)">Your addition</span>' : ''}</div>
+    <div class="dtopic">${topic}</div>
+    <div class="dsec">
+      <div class="dlbl">SRS history</div>
+      <div class="dhist">
+        ${rec.firstStudied ? `First studied: ${fmtDate(rec.firstStudied)}<br>` : '<span style="color:var(--text3)">Not yet studied</span><br>'}
+        ${rec.lastStudied ? `Last studied: ${fmtDate(rec.lastStudied)}<br>` : ''}
+        ${rec.nextReview ? `Next review: ${fmtDate(rec.nextReview)} (interval: ${rec.interval}d)<br>` : ''}
+        ${rec.repetitions ? `Repetitions: ${rec.repetitions}<br>` : ''}
+        ${rec.lastScore ? `Last recall: ${['','Again','Hard','Good','Easy'][rec.lastScore]}<br>` : ''}
+        ${rec.firstStudied ? `Strength: ${SRS.strength(rec)}%` : ''}
+      </div>
+    </div>
+    <div class="dsec">
+      <div class="dlbl">Sources</div>
+      <div class="srcblock">
+        <div class="srct">📖 NCERT</div>
+        <div class="srcrow"><label>Read</label>
+          <select class="field" id="d-ncert" onchange="UI.saveSrc('${p}',${si},${ti})">
+            <option value="" ${!rec.ncert?'selected':''}>— Not read</option>
+            <option value="yes" ${rec.ncert==='yes'?'selected':''}>Yes</option>
+          </select>
+        </div>
+        ${rec.ncert === 'yes' ? `<div class="srcrow"><label>Confidence</label>
+          <select class="field" id="d-ncertc" onchange="UI.saveSrc('${p}',${si},${ti})">
+            <option value="">— Select</option>
+            <option value="again" ${rec.ncertConf==='again'?'selected':''}>Again</option>
+            <option value="hard" ${rec.ncertConf==='hard'?'selected':''}>Hard</option>
+            <option value="good" ${rec.ncertConf==='good'?'selected':''}>Good</option>
+            <option value="easy" ${rec.ncertConf==='easy'?'selected':''}>Easy</option>
+          </select>
+        </div>` : ''}
+      </div>
+      <div class="srcblock">
+        <div class="srct">📚 Reference book</div>
+        <div class="srcrow"><label>Book name</label>
+          <input class="field" type="text" id="d-refb" placeholder="e.g. Spectrum, Bipin Chandra..."
+            value="${rec.refBook||''}" onchange="UI.saveSrc('${p}',${si},${ti})">
+        </div>
+        <div class="srcrow"><label>Section/Part</label>
+          <textarea class="field" id="d-refs" rows="2"
+            placeholder="Ch.4 temple architecture..."
+            onchange="UI.saveSrc('${p}',${si},${ti})">${rec.refSection||''}</textarea>
+        </div>
+      </div>
+      <div class="srcblock">
+        <div class="srct">📝 PYQ</div>
+        <div class="srcrow"><label>PYQ seen %</label>
+          <input type="number" id="d-pyqs" min="0" max="100" value="${rec.pyqSeen||''}" placeholder="0–100"
+            onchange="UI.saveSrc('${p}',${si},${ti})">
+          ${rec.pyqSeen ? `<span class="pyq-swatch" style="background:${pyqColor(rec.pyqSeen)}"></span>` : ''}
+        </div>
+        <div class="srcrow"><label>Evaluation</label>
+          <select class="field" id="d-pyqe" onchange="UI.saveSrc('${p}',${si},${ti})">
+            <option value="" ${!rec.pyqEval?'selected':''}>— Not attempted</option>
+            <option value="low" ${rec.pyqEval==='low'?'selected':''}>Self — Low</option>
+            <option value="avg" ${rec.pyqEval==='avg'?'selected':''}>Self — Average</option>
+            <option value="good" ${rec.pyqEval==='good'?'selected':''}>Self — Good</option>
+            <option value="excellent" ${rec.pyqEval==='excellent'?'selected':''}>Self — Excellent</option>
+          </select>
+        </div>
+        <div class="srcrow"><label>Third-party</label>
+          <select class="field" id="d-pyqt" onchange="UI.saveSrc('${p}',${si},${ti})">
+            <option value="no" ${rec.pyqThirdParty!=='yes'?'selected':''}>No</option>
+            <option value="yes" ${rec.pyqThirdParty==='yes'?'selected':''}>Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="dsec">
+      <div class="dlbl">Notes</div>
+      <textarea class="field" id="d-notes" rows="4"
+        placeholder="Key points, doubts, connections...">${rec.notes||''}</textarea>
+      <button class="btn btn-p btn-sm" style="margin-top:8px" onclick="UI.saveNotes('${p}',${si},${ti})">Save notes</button>
+    </div>
+    <div class="dsec">
+      <div class="dlbl">AI features <span style="font-size:10px;color:var(--text3)">(set API key in Settings)</span></div>
+      <button class="aihook" disabled>Explain this topic for UPSC Mains<span class="aitag">AI_HOOK</span></button>
+      <button class="aihook" disabled>Generate 5 probable questions<span class="aitag">AI_HOOK</span></button>
+      <button class="aihook" disabled>Link to recent current affairs<span class="aitag">AI_HOOK</span></button>
+    </div>`;
+
+    document.getElementById('doverlay').classList.add('open');
+  },
+
+  saveSrc(p, si, ti) {
+    const k = DB.key(p, si, ti);
+    if (!DB.data[k]) DB.data[k] = SRS.newRecord();
+    const r = DB.data[k];
+    const get = id => document.getElementById(id);
+    if (get('d-ncert')) r.ncert = get('d-ncert').value;
+    if (get('d-ncertc')) r.ncertConf = get('d-ncertc').value;
+    if (get('d-refb')) r.refBook = get('d-refb').value;
+    if (get('d-refs')) r.refSection = get('d-refs').value;
+    if (get('d-pyqs')) r.pyqSeen = get('d-pyqs').value;
+    if (get('d-pyqe')) r.pyqEval = get('d-pyqe').value;
+    if (get('d-pyqt')) r.pyqThirdParty = get('d-pyqt').value;
+    DB.save(); this.toast('Saved');
+    if (get('d-ncert')) this.openDr(p, si, ti);
+  },
+
+  saveNotes(p, si, ti) {
+    const k = DB.key(p, si, ti);
+    if (!DB.data[k]) DB.data[k] = SRS.newRecord();
+    DB.data[k].notes = document.getElementById('d-notes')?.value || '';
+    DB.save(); this.toast('Notes saved ✓');
+  },
+
+  closeDr(e) {
+    if (e && e.target !== document.getElementById('doverlay')) return;
+    document.getElementById('doverlay').classList.remove('open');
+    if (this.page === 'syllabus') this.rSyllabus();
+  },
+
+  // ── ONBOARDING ───────────────────────────────────────────────────────────────
+  rOnboard() {
+    let h = `
+    <div style="margin-bottom:20px"><div class="ph">Bulk onboarding</div>
+    <div class="ps" style="margin-top:4px">Initialise your existing preparation. Tick what you've studied, set confidence, then Apply.</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" onclick="UI.obApply()">Apply all & seed SRS</button>
+      <button class="btn btn-g btn-sm" onclick="UI.obAll(true)">Check all</button>
+      <button class="btn btn-g btn-sm" onclick="UI.obAll(false)">Uncheck all</button>
+    </div>
+    <div class="ob-grid">`;
+
+    PAPER_ORDER.forEach(p => {
+      const info = SYLLABUS[p];
+      h += `<div class="ob-paper">
+        <div class="ob-phdr" style="color:${info.color}" onclick="UI.togOb('ob-${p}','oba-${p}')">
+          ${info.label} <span style="margin-left:auto;color:var(--text3)" id="oba-${p}">▾</span>
+        </div>
+        <div id="ob-${p}" style="display:none">`;
+      SYLLABUS[p].subjects.forEach((subj, si) => {
+        const all = [...subj.topics, ...(subj.additions || [])];
+        all.forEach((topic, ti) => {
+          const rec = DB.getRecord(p, si, ti);
+          const done = !!rec?.firstStudied;
+          const conf = rec?.lastScore ? ['','again','hard','good','easy'][rec.lastScore] : 'good';
+          h += `<div class="ob-trow" onclick="UI.togChk('oc-${p}-${si}-${ti}')">
+            <div class="ob-chk ${done?'checked':''}" id="oc-${p}-${si}-${ti}">${done?'✓':''}</div>
+            <div class="ob-name">${topic.length > 50 ? topic.substring(0,50)+'…' : topic}</div>
+            <select class="ob-sel" onclick="event.stopPropagation()" id="ov-${p}-${si}-${ti}">
+              <option value="again" ${conf==='again'?'selected':''}>Again</option>
+              <option value="hard" ${conf==='hard'?'selected':''}>Hard</option>
+              <option value="good" ${conf==='good'?'selected':''}>Good</option>
+              <option value="easy" ${conf==='easy'?'selected':''}>Easy</option>
+            </select>
+          </div>`;
+        });
+      });
+      h += `</div></div>`;
+    });
+
+    h += `</div><div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
+      <strong style="color:var(--text)">How it works:</strong> Check topics you have already studied. Set confidence honestly. Click Apply — SRS seeds each checked topic with the right starting interval. Unchecked topics remain new.
+    </div>`;
+
+    document.getElementById('c-onboard').innerHTML = h;
+  },
+
+  togOb(id, aid) {
+    const el = document.getElementById(id), ar = document.getElementById(aid);
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'block';
+    if (ar) ar.textContent = open ? '▾' : '▴';
+  },
+
+  togChk(id) {
+    const el = document.getElementById(id); if (!el) return;
+    const c = el.classList.toggle('checked'); el.textContent = c ? '✓' : '';
+  },
+
+  obAll(check) {
+    document.querySelectorAll('.ob-chk').forEach(el => {
+      el.classList.toggle('checked', check); el.textContent = check ? '✓' : '';
+    });
+  },
+
+  obApply() {
+    let count = 0;
+    PAPER_ORDER.forEach(p => {
+      SYLLABUS[p].subjects.forEach((subj, si) => {
+        const all = [...subj.topics, ...(subj.additions || [])];
+        all.forEach((_, ti) => {
+          const chk = document.getElementById(`oc-${p}-${si}-${ti}`);
+          const conf = document.getElementById(`ov-${p}-${si}-${ti}`);
+          if (chk?.classList.contains('checked') && conf) {
+            const rec = DB.getRecord(p, si, ti) || SRS.newRecord();
+            if (!rec.firstStudied) { DB.setRecord(p, si, ti, SRS.seedFromConf(conf.value)); count++; }
+          }
+        });
+      });
+    });
+    this.refresh();
+    this.queue = Queue.build(DB.settings.dailyTarget || 6);
+    this.initStates();
+    this.toast(`${count} topics seeded ✓`);
+    this.go('today');
+  },
+
+  // ── GAP ANALYSIS ─────────────────────────────────────────────────────────────
+  rGaps() {
+    const stats = Queue.stats();
+    let h = `
+    <div style="margin-bottom:20px"><div class="ph">Gap analysis</div>
+    <div class="ps" style="margin-top:4px">Where you are vs where you need to be.</div></div>
+    <div class="metrics">
+      <div class="met"><div class="ml">Total topics</div><div class="mv">${stats.total}</div><div class="ms">across all papers</div></div>
+      <div class="met"><div class="ml">Studied</div><div class="mv" style="color:var(--accent)">${stats.studied}</div><div class="ms">${Math.round(stats.studied/Math.max(stats.total,1)*100)}% first pass</div></div>
+      <div class="met"><div class="ml">Strong</div><div class="mv" style="color:var(--green)">${stats.strong}</div><div class="ms">retention > 70%</div></div>
+      <div class="met"><div class="ml">Unseen</div><div class="mv" style="color:var(--red)">${stats.unseen}</div><div class="ms">never studied</div></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600">Gap score by paper</div>
+      <div style="font-size:13px;color:var(--text3)">Lower is better · 0 = no gaps · 100 = all unseen</div>
+    </div>
+    <div class="gap-grid">`;
+
+    PAPER_ORDER.forEach(p => {
+      const gap = Analytics.gapScore(p);
+      const cov = Analytics.paperCoverage(p);
+      const str = Analytics.paperStrength(p);
+      const info = SYLLABUS[p];
+      const gc = gap > 70 ? 'var(--red)' : gap > 40 ? 'var(--amber)' : 'var(--green)';
+      h += `<div class="gcard">
+        <div class="gpaper" style="color:${info.color}">${info.label}</div>
+        <div class="gnum" style="color:${gc}">${gap}<span style="font-size:13px;color:var(--text3)"> / 100</span></div>
+        <div class="grow"><span class="glbl">Coverage</span><div class="gtrk"><div class="gfil" style="width:${cov}%;background:${info.color}"></div></div><span class="gpct">${cov}%</span></div>
+        <div class="grow"><span class="glbl">Strength</span><div class="gtrk"><div class="gfil" style="width:${str}%;background:var(--green)"></div></div><span class="gpct">${str}%</span></div>
+        <div class="grow"><span class="glbl">Gap</span><div class="gtrk"><div class="gfil" style="width:${gap}%;background:${gc}"></div></div><span class="gpct">${gap}%</span></div>
+        <button class="btn btn-g btn-sm" style="margin-top:10px;width:100%" onclick="UI.goPaper('${p}')">View ${info.label} →</button>
+      </div>`;
+    });
+
+    h += `</div><div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
+      <strong style="color:var(--text)">Gap score formula:</strong> Unseen = 1.0 · Again = 0.8 · Hard = 0.5 · Good = 0.2 · Easy = 0. Score below 30 = well covered.
+    </div>`;
+
+    document.getElementById('c-gaps').innerHTML = h;
+  },
+
+  // ── BATTLE PLAN ──────────────────────────────────────────────────────────────
+  rPlan() {
+    const y = this.year;
+    const phases = PHASES[y];
+    const cur = Plan.current(y);
+    const pace = Plan.pace(y);
+    const wd = Plan.weekDone();
+    const today = todayStr();
+
+    let h = `
+    <div class="plan-hdr">
+      <div><div class="ph">Battle plan</div><div class="ps" style="margin-top:2px">Neuroscience-sequenced roadmap to Prelims</div></div>
+      <div class="ytog">
+        <button class="ybtn ${y===2027?'active':''}" onclick="UI.setYear(2027)">CSE 2027</button>
+        <button class="ybtn ${y===2028?'active':''}" onclick="UI.setYear(2028)">CSE 2028</button>
+      </div>
+    </div>
+    <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+      <div class="met"><div class="ml">Days to Prelims</div><div class="mv" style="color:var(--accent)">${pace.daysLeft}</div><div class="ms">Prelims ${y}</div></div>
+      <div class="met"><div class="ml">Pace</div><div class="mv" style="font-size:18px;color:var(--${pace.status==='on-track'?'green':pace.status==='watch'?'amber':'red'})">${pace.status.replace('-',' ')}</div><div class="ms">${pace.msg}</div></div>
+      <div class="met"><div class="ml">This week</div><div class="mv">${wd}<span style="font-size:13px;color:var(--text3)"> / ${cur?.weekly||6}</span></div><div class="ms">${Math.round(wd/Math.max(cur?.weekly||6,1)*100)}% of target</div></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600">Phase timeline</div>
+      <div style="font-size:13px;color:var(--text3)">Where you are & what comes next</div>
+    </div>`;
+
+    phases.forEach((phase, idx) => {
+      const isPast = today > phase.end, isCur = today >= phase.start && today <= phase.end;
+      const isLast = idx === phases.length - 1;
+      const cls = isPast ? 'past' : isCur ? 'current' : '';
+      h += `<div class="pblock">
+        <div class="pline-w">
+          <div class="pcircle ${cls}"><div class="phdot"></div></div>
+          ${!isLast ? `<div class="pconn ${isPast?'past':''}"></div>` : ''}
+        </div>
+        <div class="pcont ${cls}">
+          <div class="ptag">${phase.tag}${isCur?' · You are here':''}</div>
+          <div class="pname">${phase.name}</div>
+          <div class="pdates">${fmtDate(phase.start)} → ${fmtDate(phase.end)} · ${phase.weekly} topics/week · ${phase.daily}h/day</div>
+          <div class="pgoal">${phase.goal}</div>
+          <div class="pneuro">⚡ ${phase.neuro}</div>
+        </div>
+      </div>`;
+    });
+
+    h += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">Foundation:</strong> Encoding phase. New pathways form. Breadth first.<br>
+      <strong style="color:var(--text)">Deepening:</strong> Consolidation. Myelin thickens on pathways you revisit repeatedly.<br>
+      <strong style="color:var(--text)">Integration:</strong> Interleaving across subjects builds flexible retrieval — 30–40% better than blocked practice.<br>
+      <strong style="color:var(--text)">Sprint:</strong> Retrieval practice. Testing yourself is 2× more effective than re-reading.
+    </div>`;
+
+    document.getElementById('c-plan').innerHTML = h;
+  },
+
+  setYear(y) {
+    this.year = y; DB.settings.targetYear = y; DB.save();
+    this.refresh(); this.rPlan();
+  },
+
+  // ── STATS ────────────────────────────────────────────────────────────────────
+  rStats() {
+    const act = Analytics.activity90();
+    const stats = Queue.stats();
+    const streak = DB.settings.streak || 0;
+    const cells = act.map(d => {
+      const l = d.count === 0 ? 0 : d.count < 3 ? 1 : d.count < 6 ? 2 : 3;
+      return `<div class="ahc l${l}" title="${d.date}: ${d.count}"></div>`;
+    }).join('');
+
+    let h = `
+    <div style="margin-bottom:20px"><div class="ph">Stats</div><div class="ps" style="margin-top:4px">Your preparation fingerprint</div></div>
+    <div class="metrics">
+      <div class="met"><div class="ml">Streak</div><div class="mv" style="color:var(--amber)">🔥${streak}</div><div class="ms">consecutive days</div></div>
+      <div class="met"><div class="ml">Studied</div><div class="mv" style="color:var(--accent)">${stats.studied}</div><div class="ms">of ${stats.total} topics</div></div>
+      <div class="met"><div class="ml">Strong</div><div class="mv" style="color:var(--green)">${stats.strong}</div><div class="ms">retention > 70%</div></div>
+      <div class="met"><div class="ml">Due today</div><div class="mv" style="color:var(--red)">${stats.due}</div><div class="ms">for review</div></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Activity — last 90 days</div>
+      <div class="ah-grid">${cells}</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--text3)">
+        Less <div class="ahc" style="width:11px;height:11px;display:inline-block"></div>
+        <div class="ahc l1" style="width:11px;height:11px;display:inline-block"></div>
+        <div class="ahc l2" style="width:11px;height:11px;display:inline-block"></div>
+        <div class="ahc l3" style="width:11px;height:11px;display:inline-block"></div> More
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Coverage & strength by paper</div>
+      ${PAPER_ORDER.map(p => {
+        const cov = Analytics.paperCoverage(p), str = Analytics.paperStrength(p), info = SYLLABUS[p];
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="font-weight:500">${info.label}</span>
+            <span style="color:var(--text3)">${cov}% covered · ${str}% strength</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${cov}%;background:${info.color};border-radius:999px"></div></div>
+            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${str}%;background:var(--green);border-radius:999px"></div></div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:3px;font-size:10px;color:var(--text3)"><span style="flex:1">Coverage</span><span style="flex:1">Retention</span></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    document.getElementById('c-stats').innerHTML = h;
+  },
+
+  // ── SETTINGS ─────────────────────────────────────────────────────────────────
+  rSettings() {
+    const t = DB.settings.dailyTarget || 6;
+    document.getElementById('c-settings').innerHTML = `
+    <div style="margin-bottom:20px"><div class="ph">Settings</div></div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Study preferences</div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Daily target: <strong id="td">${t}</strong> topics</div>
+        <input type="range" min="3" max="15" step="1" value="${t}" style="width:100%"
+          oninput="document.getElementById('td').textContent=this.value"
+          onchange="DB.settings.dailyTarget=parseInt(this.value);DB.save();UI.queue=Queue.build(parseInt(this.value));UI.initStates();">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px"><span>3 light</span><span>6 balanced</span><span>15 intensive</span></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Target exam year</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ${this.year===2027?'btn-p':'btn-g'}" onclick="UI.setYear(2027)">CSE 2027</button>
+          <button class="btn ${this.year===2028?'btn-p':'btn-g'}" onclick="UI.setYear(2028)">CSE 2028</button>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Data</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="UI.expData()">Export backup</button>
+        <label class="btn btn-g" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="UI.impData(event)"></label>
+        <button class="btn btn-r" onclick="UI.resetAll()">Reset all progress</button>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">About Myelocus</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        Official UPSC syllabus · SM-2 SRS (4-point) · Interleaved queue · New/review distinction ·
+        Four source types · Bulk onboarding · Neuroscience battle plan<br>
+        <span style="color:var(--text3);font-size:12px;font-style:italic">v3 · "The locus where myelin forms."</span>
+      </div>
+    </div>`;
+  },
+
+  expData() {
+    const b = new Blob([DB.export()], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = `myelocus_backup_${todayStr()}.json`; a.click();
+  },
+
+  impData(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => { try { DB.import(ev.target.result); this.init(); this.toast('Imported ✓'); } catch { this.toast('Invalid file'); } };
+    r.readAsText(f);
+  },
+
+  resetAll() {
+    if (!confirm('Reset all progress? Cannot be undone.')) return;
+    localStorage.removeItem('myelocus_v3'); localStorage.removeItem('myelocus_additions');
+    DB.load(); Additions.load(); this.init(); this.toast('Progress reset');
+  }
+};
+
+UI.init();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

@@ -4,5 +4,5 @@
   <circle cx="96" cy="88" r="38" fill="none" stroke="#6366f1" stroke-width="3" opacity="0.3"/>
   <circle cx="96" cy="88" r="24" fill="none" stroke="#6366f1" stroke-width="3" opacity="0.5"/>
   <circle cx="96" cy="88" r="10" fill="#6366f1"/>
-  <text x="96" y="148" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="700" fill="#6366f1" text-anchor="middle" letter-spacing="1">MYELOCUS</text>
+  <text x="96" y="148" font-family="-apple-system,sans-serif" font-size="16" font-weight="700" fill="#6366f1" text-anchor="middle" letter-spacing="1">MYELOCUS</text>
 </svg>
