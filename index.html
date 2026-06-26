@@ -83,7 +83,7 @@
   </nav>
 
   <!-- MAIN -->
-  <main class="main">
+  <main class="main" id="main">
     <div class="page active" id="page-today"><div id="today-content"></div></div>
     <div class="page" id="page-syllabus"><div id="syllabus-content"></div></div>
     <div class="page" id="page-gaps"><div id="gaps-content"></div></div>
@@ -134,6 +134,7 @@ const UI = {
     document.documentElement.setAttribute('data-theme', theme);
     document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '☾';
     this.restoreOrBuildQueue();
+    this.initCardStates();
     this.updateHeader();
     this.updateNavPcts();
     this.renderToday();
@@ -223,8 +224,8 @@ const UI = {
   // ─── TODAY ──────────────────────────────────────────────────────────────────
   renderToday() {
     const target = DB.settings.dailyTarget || 6;
-    const done = this.doneToday;
     const total = this.queue.length;
+    const done = this.queue.filter((_, i) => this.cardStates[i] && this.cardStates[i].done).length;
     const allDone = done >= total && total > 0;
     const pct = total > 0 ? Math.round(done / total * 100) : 0;
     const circ = 2 * Math.PI * 18;
@@ -242,59 +243,68 @@ const UI = {
         <div style="font-size:15px;font-weight:600;margin-bottom:6px">No topics due today</div>
         <div style="font-size:13px">SRS schedule is clear. Study something new from the Syllabus map.</div>
       </div>`;
-    } else if (allDone) {
-      qHTML = this.completionHTML(done);
     } else {
+      if (allDone) {
+        const streak = DB.settings.streak || 0;
+        qHTML += `<div class="done-screen show" style="margin-bottom:16px">
+          <div class="done-icon">◎</div>
+          <div class="done-title">Session complete</div>
+          <div class="done-sub">All ${done} topics done. The pathways strengthen.</div>
+          <div class="done-stats">
+            <div class="ds"><div class="ds-val" style="color:var(--accent)">${done}</div><div class="ds-lbl">Today</div></div>
+            <div class="ds"><div class="ds-val" style="color:var(--amber)">🔥 ${streak}</div><div class="ds-lbl">Streak</div></div>
+            <div class="ds"><div class="ds-val" style="color:var(--green)">${stats.strong}</div><div class="ds-lbl">Strong</div></div>
+          </div>
+          <button class="btn btn-ghost" onclick="UI.buildQueue();UI.initCardStates();UI.renderToday();">Load more topics</button>
+        </div>`;
+      }
+
       this.queue.forEach((item, idx) => {
-        const isDone = idx < done;
-        const isActive = idx === done;
+        const state = this.cardStates[idx] || { done: false, score: null, expanded: false };
+        const isDone = state.done;
         const isNew = SRS.isNew(item.rec);
         const info = SYLLABUS[item.paper];
-        const typeClass = isNew ? 'is-new' : 'is-review';
+        const scoreLabels = ['', 'Again', 'Hard', 'Good', 'Easy'];
+        const scoreColors = ['', 'var(--red)', 'var(--amber)', 'var(--blue)', 'var(--green)'];
+
+        // Card border color: done = green, active/expanded = accent, default = border
+        const borderStyle = isDone
+          ? 'border-color:var(--green)'
+          : state.expanded ? 'border-color:var(--accent)' : '';
+
         qHTML += `
-        <div class="qcard ${isActive ? 'active ' + typeClass : ''} ${isDone ? 'done' : ''}" id="qcard-${idx}">
-          <div class="qcard-head">
-            <div class="qnum">${isDone ? '✓' : idx + 1}</div>
-            <div class="qtopic">${item.topic}${item.isAddition ? ' <span style="font-size:10px;color:var(--cyan)">[addition]</span>' : ''}</div>
+        <div class="qcard" style="${borderStyle}" id="qcard-${idx}">
+          <div class="qcard-head" onclick="UI.toggleCard(${idx})" style="cursor:pointer">
+            <div class="qnum" style="${isDone ? 'background:var(--green-bg);color:var(--green)' : state.expanded ? 'background:var(--accent-bg);color:var(--accent2)' : ''}">${isDone ? '✓' : idx + 1}</div>
+            <div class="qtopic">${item.topic}</div>
             <span class="qpaper" style="background:${info.color}20;color:${info.color}">${info.label}</span>
-            <span class="qtype">${isNew ? 'New' : 'Review'}</span>
+            ${isDone && state.score
+              ? `<span style="font-size:11px;font-weight:600;color:${scoreColors[state.score]}">${scoreLabels[state.score]}</span>`
+              : `<span class="qtype">${isNew ? 'New' : 'Review'}</span>`}
+            <span style="color:var(--text3);font-size:14px;margin-left:4px">${state.expanded ? '▴' : '▾'}</span>
           </div>
 
-          ${isActive && isNew ? `
-          <div class="new-panel">
-            <div class="new-msg">
-              <strong>First time seeing this topic.</strong><br>
-              Go study it now — Laxmikanth, NCERT, your coaching notes, or any source you use.<br>
-              Come back and mark it studied when done.
-            </div>
-            <button class="mark-studied-btn" onclick="UI.markStudied(${idx})">
-              ✓ Mark as studied — I have read this
-            </button>
-            <div class="card-actions" style="margin-top:8px">
-              <button class="btn btn-ghost btn-sm" onclick="UI.openDrawer('${item.paper}',${item.si},${item.ti})">Add source details</button>
-            </div>
-          </div>` : ''}
+          ${state.expanded ? `
+          <div style="padding:0 14px 14px;border-top:1px solid var(--border)">
+            ${isNew && !isDone ? `
+              <div style="font-size:12px;color:var(--text2);padding:10px 0 12px;line-height:1.6">
+                Study this topic, then mark it done below.
+              </div>
+              <button class="mark-studied-btn" onclick="UI.markStudied(${idx})">
+                ✓ Done — I have studied this
+              </button>` : ''}
 
-          ${isActive && !isNew ? `
-          <div class="rate-panel">
-            <div class="rate-label">Attempt to recall — without looking at notes. How well did you remember?</div>
-            <div class="rate-btns">
-              <button class="rate-btn again" onclick="UI.rateCard(${idx},1)">
-                Again <span>Complete blank</span>
-              </button>
-              <button class="rate-btn hard" onclick="UI.rateCard(${idx},2)">
-                Hard <span>Significant gaps</span>
-              </button>
-              <button class="rate-btn good" onclick="UI.rateCard(${idx},3)">
-                Good <span>Recalled with effort</span>
-              </button>
-              <button class="rate-btn easy" onclick="UI.rateCard(${idx},4)">
-                Easy <span>Recalled instantly</span>
-              </button>
-            </div>
-            <div class="card-actions">
-              <button class="btn btn-ghost btn-sm" onclick="UI.openDrawer('${item.paper}',${item.si},${item.ti})">Notes & sources</button>
-              <!-- AI_HOOK: generate questions for this topic -->
+            ${!isNew || isDone ? `
+              <div style="font-size:12px;color:var(--text3);margin:10px 0 8px">${isDone ? 'Change rating:' : 'How well did you recall this?'}</div>
+              <div class="rate-btns">
+                <button class="rate-btn again ${state.score===1?'selected':''}" onclick="UI.rateCard(${idx},1)">Again<span>Blank</span></button>
+                <button class="rate-btn hard ${state.score===2?'selected':''}" onclick="UI.rateCard(${idx},2)">Hard<span>Gaps</span></button>
+                <button class="rate-btn good ${state.score===3?'selected':''}" onclick="UI.rateCard(${idx},3)">Good<span>Effort</span></button>
+                <button class="rate-btn easy ${state.score===4?'selected':''}" onclick="UI.rateCard(${idx},4)">Easy<span>Instant</span></button>
+              </div>` : ''}
+
+            <div style="margin-top:10px">
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.openDrawer('${item.paper}',${item.si},${item.ti})">Notes & sources</button>
             </div>
           </div>` : ''}
         </div>`;
@@ -323,7 +333,7 @@ const UI = {
               <p>Interleaved · target ${target}</p>
             </div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="UI.buildQueue();UI.renderToday();">↺ Refresh queue</button>
+          <button class="btn btn-ghost btn-sm" onclick="UI.buildQueue();UI.initCardStates();UI.renderToday();">↺ Refresh</button>
         </div>
         ${qHTML}
       </div>
@@ -356,10 +366,10 @@ const UI = {
         </div>
 
         <div class="scard">
-          <div class="scard-title">Queue breakdown</div>
+          <div class="scard-title">Today</div>
           <div style="display:flex;gap:10px">
             <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--red)">${stats.overdue}</div><div style="font-size:11px;color:var(--text3)">overdue</div></div>
-            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--amber)">${stats.due - stats.overdue}</div><div style="font-size:11px;color:var(--text3)">due today</div></div>
+            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--amber)">${stats.due - stats.overdue}</div><div style="font-size:11px;color:var(--text3)">due</div></div>
             <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--green)">${stats.strong}</div><div style="font-size:11px;color:var(--text3)">strong</div></div>
             <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--text3)">${stats.unseen}</div><div style="font-size:11px;color:var(--text3)">unseen</div></div>
           </div>
@@ -368,35 +378,39 @@ const UI = {
     </div>`;
   },
 
-  completionHTML(done) {
-    const streak = DB.settings.streak || 0;
-    return `<div class="done-screen show">
-      <div class="done-icon">◎</div>
-      <div class="done-title">Session complete</div>
-      <div class="done-sub">You studied ${done} topic${done !== 1 ? 's' : ''} today. The pathways strengthen.</div>
-      <div class="done-stats">
-        <div class="ds"><div class="ds-val" style="color:var(--accent)">${done}</div><div class="ds-lbl">Topics today</div></div>
-        <div class="ds"><div class="ds-val" style="color:var(--amber)">🔥 ${streak}</div><div class="ds-lbl">Day streak</div></div>
-        <div class="ds"><div class="ds-val" style="color:var(--green)">${Queue.stats().strong}</div><div class="ds-lbl">Strong topics</div></div>
-      </div>
-      <button class="btn btn-ghost" onclick="UI.buildQueue();UI.renderToday();">Load more topics</button>
-    </div>`;
+  // Card states — independent per card, not sequential
+  cardStates: {},
+
+  initCardStates() {
+    this.cardStates = {};
+    this.queue.forEach((_, i) => { this.cardStates[i] = { done: false, score: null, expanded: false }; });
+  },
+
+  toggleCard(idx) {
+    if (!this.cardStates[idx]) this.cardStates[idx] = { done: false, score: null, expanded: false };
+    // Close all others, open this one (accordion — one at a time reduces cognitive load)
+    const wasOpen = this.cardStates[idx].expanded;
+    Object.keys(this.cardStates).forEach(k => { this.cardStates[k].expanded = false; });
+    this.cardStates[idx].expanded = !wasOpen;
+    this.renderToday();
   },
 
   markStudied(idx) {
     const item = this.queue[idx];
     if (!item) return;
     const existing = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
-    // First study — seed with Good (3) as default
     const updated = SRS.review({ ...existing, firstStudied: todayStr() }, 3);
     DB.setRecord(item.paper, item.si, item.ti, updated);
-    this.doneToday++;
-    this.queueIdx++;
-    DB.saveQueueState(this.queue, this.queueIdx);
+    if (!this.cardStates[idx]) this.cardStates[idx] = { done: false, score: null, expanded: false };
+    this.cardStates[idx].done = true;
+    this.cardStates[idx].score = 3;
+    this.cardStates[idx].expanded = false;
+    this.doneToday = Object.values(this.cardStates).filter(s => s.done).length;
+    DB.saveQueueState(this.queue, this.doneToday);
     this.updateHeader();
     this.updateNavPcts();
     this.renderToday();
-    this.toast('Marked as studied ✓');
+    this.toast('Studied ✓');
   },
 
   rateCard(idx, score) {
@@ -405,12 +419,16 @@ const UI = {
     const existing = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
     const updated = SRS.review(existing, score);
     DB.setRecord(item.paper, item.si, item.ti, updated);
-    this.doneToday++;
-    this.queueIdx++;
-    DB.saveQueueState(this.queue, this.queueIdx);
+    // Update card state — always editable, never locked
+    if (!this.cardStates[idx]) this.cardStates[idx] = { done: false, score: null, expanded: true };
+    this.cardStates[idx].done = true;
+    this.cardStates[idx].score = score;
+    this.cardStates[idx].expanded = false;
+    this.doneToday = Object.values(this.cardStates).filter(s => s.done).length;
+    DB.saveQueueState(this.queue, this.doneToday);
     this.updateHeader();
     this.updateNavPcts();
-    const labels = ['', 'Again — tomorrow', 'Hard — 2 days', 'Good — interval grows', 'Easy — accelerated'];
+    const labels = ['', 'Again — see you tomorrow', 'Hard — short interval', 'Good — interval grows', 'Easy — accelerated'];
     this.toast(labels[score]);
     this.renderToday();
   },
