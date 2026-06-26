@@ -1,789 +1,910 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f1117">
-<meta name="description" content="Myelocus — Myelocus — where disciplined study builds permanent neural pathways">
+<meta name="description" content="Myelocus — UPSC Civil Services preparation tracker">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Myelocus">
-<title>Myelocus — UPSC Tracker</title>
+<title>Myelocus</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.svg">
-<style>
-:root {
-  --bg: #0f1117;
-  --bg2: #1a1d27;
-  --bg3: #22263a;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --text: #f0f0f0;
-  --text2: #9ca3af;
-  --text3: #5a6070;
-  --accent: #6366f1;
-  --accent2: #818cf8;
-  --accent-bg: rgba(99,102,241,0.12);
-  --green: #22c55e;
-  --green-bg: rgba(34,197,94,0.12);
-  --amber: #f59e0b;
-  --amber-bg: rgba(245,158,11,0.12);
-  --red: #ef4444;
-  --red-bg: rgba(239,68,68,0.12);
-  --blue: #3b82f6;
-  --blue-bg: rgba(59,130,246,0.12);
-  --radius: 10px;
-  --radius-lg: 14px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100%;line-height:1.5;font-size:15px}
-
-/* Layout */
-.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:80px}
-.header{padding:20px 20px 0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)}
-.header-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
-.logo-text{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
-.logo-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.header-actions{display:flex;gap:8px}
-.icon-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:18px;transition:all 0.15s}
-.icon-btn:hover{background:var(--bg2);color:var(--text)}
-
-/* Nav tabs */
-.nav-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding-bottom:0}
-.nav-tabs::-webkit-scrollbar{display:none}
-.nav-tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;font-size:13px;color:var(--text3);cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:500}
-.nav-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
-.nav-tab:hover{color:var(--text2)}
-
-/* Pages */
-.page{display:none;padding:20px}
-.page.active{display:block}
-
-/* Metric cards */
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
-.metric-val{font-size:26px;font-weight:700;color:var(--text)}
-.metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
-
-/* Paper cards */
-.paper-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden;cursor:pointer;transition:border-color 0.15s}
-.paper-card:hover{border-color:var(--border2)}
-.paper-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
-.paper-info{flex:1}
-.paper-title{font-size:14px;font-weight:600;color:var(--text)}
-.paper-sub{font-size:12px;color:var(--text3);margin-top:2px}
-.paper-pct{font-size:20px;font-weight:700}
-.prog-bar{height:3px;background:var(--bg3)}
-.prog-fill{height:3px;transition:width 0.5s ease}
-
-/* Section & topic list */
-.section-block{margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
-.section-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
-.section-title{font-size:13px;font-weight:600;color:var(--text)}
-.section-count{font-size:12px;color:var(--text3)}
-.topic-row{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;transition:background 0.1s;border-bottom:1px solid var(--border)}
-.topic-row:last-child{border-bottom:none}
-.topic-row:hover{background:var(--bg3)}
-.status-ring{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-.status-ring.started{border-color:var(--blue);background:var(--blue-bg)}
-.status-ring.done{border-color:var(--green);background:var(--green-bg)}
-.status-ring.revision{border-color:var(--amber);background:var(--amber-bg)}
-.status-ring.done::after{content:'✓';font-size:10px;color:var(--green);font-weight:700}
-.status-ring.started::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue)}
-.status-ring.revision::after{content:'!';font-size:10px;color:var(--amber);font-weight:700}
-.topic-info{flex:1;min-width:0}
-.topic-name{font-size:13px;color:var(--text);line-height:1.4}
-.topic-meta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
-.tag{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:500}
-.tag-due{background:var(--red-bg);color:var(--red)}
-.tag-soon{background:var(--amber-bg);color:var(--amber)}
-.tag-ok{background:var(--green-bg);color:var(--green)}
-.tag-score{background:var(--blue-bg);color:var(--blue)}
-.edit-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;border-radius:6px;transition:all 0.15s;flex-shrink:0}
-.edit-btn:hover{color:var(--text);background:var(--bg3)}
-
-/* Detail drawer */
-.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:none;align-items:flex-end}
-.drawer-overlay.open{display:flex}
-.drawer{background:var(--bg2);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-width:480px;margin:0 auto;padding:20px;max-height:85vh;overflow-y:auto}
-.drawer-handle{width:36px;height:4px;background:var(--bg3);border-radius:999px;margin:0 auto 16px}
-.drawer-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:16px;line-height:1.4}
-.status-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
-.status-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-size:13px;color:var(--text2);cursor:pointer;text-align:center;transition:all 0.15s;font-weight:500}
-.status-btn:hover{border-color:var(--border2);color:var(--text)}
-.status-btn.active-pending{border-color:var(--border2);background:var(--bg3);color:var(--text)}
-.status-btn.active-started{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
-.status-btn.active-done{border-color:var(--green);background:var(--green-bg);color:var(--green)}
-.status-btn.active-revision{border-color:var(--amber);background:var(--amber-bg);color:var(--amber)}
-.field-label{font-size:12px;color:var(--text3);margin-bottom:6px;margin-top:14px}
-.field-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:14px;color:var(--text);outline:none;transition:border-color 0.15s;font-family:inherit}
-.field-input:focus{border-color:var(--accent)}
-textarea.field-input{resize:vertical;min-height:80px;line-height:1.5}
-.drawer-actions{display:flex;gap:8px;margin-top:16px}
-.btn{padding:10px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent2)}
-.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
-.btn-ai{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;flex:1}
-.btn-ai:hover{opacity:0.9}
-
-/* AI Panel */
-.ai-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden}
-.ai-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.ai-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.ai-key-row{padding:14px 16px;display:flex;gap:8px}
-.ai-key-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--text);outline:none;font-family:monospace}
-.ai-key-row input:focus{border-color:var(--accent)}
-.ai-output{padding:16px;font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;min-height:60px}
-.ai-output .q-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;font-size:13px;color:var(--text);line-height:1.6}
-.ai-output .q-num{font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:4px}
-.ai-output .q-hint{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic}
-.ai-controls{padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap}
-.ai-type-btn{background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.15s}
-.ai-type-btn.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg)}
-.ai-type-btn:hover{color:var(--text)}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* Heatmap */
-.heatmap-wrap{margin-bottom:20px}
-.heatmap-title{font-size:12px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em}
-.heatmap{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
-.hm-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3)}
-.hm-cell.l1{background:rgba(99,102,241,0.3)}
-.hm-cell.l2{background:rgba(99,102,241,0.6)}
-.hm-cell.l3{background:#6366f1}
-.hm-legend{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;color:var(--text3)}
-.hm-legend-cell{width:10px;height:10px;border-radius:2px}
-
-/* Settings */
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
-.setting-label{font-size:14px;color:var(--text)}
-.setting-sub{font-size:12px;color:var(--text3);margin-top:2px}
-.toggle{width:44px;height:24px;background:var(--bg3);border:1px solid var(--border2);border-radius:999px;cursor:pointer;position:relative;transition:background 0.2s}
-.toggle.on{background:var(--accent)}
-.toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform 0.2s}
-.toggle.on::after{transform:translateX(20px)}
-.danger-btn{background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:var(--radius);padding:10px 16px;font-size:13px;cursor:pointer;font-weight:600;margin-top:16px}
-
-/* Bottom nav */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding:8px 0 12px;z-index:20}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--text3);transition:color 0.15s;background:none;border:none;font-family:inherit}
-.bnav-item.active{color:var(--accent2)}
-.bnav-icon{font-size:20px}
-.bnav-label{font-size:10px;font-weight:500}
-
-/* Toast */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:999px;font-size:13px;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
-
-/* Welcome banner */
-.welcome{background:var(--accent-bg);border:1px solid rgba(99,102,241,0.25);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px}
-.welcome-quote{font-size:13px;color:var(--accent2);font-style:italic;line-height:1.6;margin-bottom:8px}
-.welcome-date{font-size:12px;color:var(--text3)}
-
-/* Empty state */
-.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
-.empty-icon{font-size:36px;margin-bottom:12px}
-
-/* Back button */
-.back-btn{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;margin-bottom:16px;padding:4px 0;font-family:inherit}
-.back-btn:hover{color:var(--text)}
-
-@media(prefers-color-scheme:light){
-  :root{
-    --bg:#f8f9fc;--bg2:#ffffff;--bg3:#f1f3f8;
-    --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
-    --text:#111827;--text2:#4b5563;--text3:#9ca3af;
-  }
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-top">
-      <div class="logo">
-        <div class="logo-mark">M</div>
-        <div>
-          <div class="logo-text" style="font-size:16px">Myelocus</div>
-          <div class="logo-sub">Build your neural edge</div>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button class="icon-btn" onclick="showPage('ai')" title="AI Assistant">✦</button>
-        <button class="icon-btn" onclick="showPage('settings')" title="Settings">⚙</button>
+
+<div class="shell" id="shell">
+
+  <!-- ─── HEADER ─────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">M</div>
+      <div>
+        <div class="logo-text">Myelocus</div>
+        <div class="logo-sub">Build your neural edge</div>
       </div>
     </div>
-    <div class="nav-tabs" id="nav-tabs"></div>
-  </div>
 
-  <div id="page-home" class="page active"></div>
-  <div id="page-paper" class="page"></div>
-  <div id="page-ai" class="page"></div>
-  <div id="page-settings" class="page"></div>
+    <div class="header-center">
+      <div class="countdown-chip" id="countdown-chip">
+        <div class="pace-dot" id="pace-dot"></div>
+        <span id="countdown-text">Loading...</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="streak-chip" id="streak-chip">🔥 0 days</div>
+      <button class="icon-btn" onclick="UI.toggleTheme()" title="Toggle theme" id="theme-btn">☀</button>
+      <button class="icon-btn" onclick="UI.showPage('settings')" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- ─── SIDEBAR ────────────────────────────────────────────────────────── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="nav-section-label">Study</div>
+    <button class="nav-item active" id="nav-today" onclick="UI.showPage('today')">
+      <span>⊙</span> Today's queue
+      <span class="nav-pct" id="nav-today-count"></span>
+    </button>
+
+    <div class="nav-section-label">Syllabus</div>
+    <button class="nav-item" id="nav-gs1" onclick="UI.showPage('syllabus','gs1')">
+      <span class="nav-dot" style="background:#6366f1"></span> GS 1
+      <span class="nav-pct" id="nav-pct-gs1">0%</span>
+    </button>
+    <button class="nav-item" id="nav-gs2" onclick="UI.showPage('syllabus','gs2')">
+      <span class="nav-dot" style="background:#22c55e"></span> GS 2
+      <span class="nav-pct" id="nav-pct-gs2">0%</span>
+    </button>
+    <button class="nav-item" id="nav-gs3" onclick="UI.showPage('syllabus','gs3')">
+      <span class="nav-dot" style="background:#f59e0b"></span> GS 3
+      <span class="nav-pct" id="nav-pct-gs3">0%</span>
+    </button>
+    <button class="nav-item" id="nav-gs4" onclick="UI.showPage('syllabus','gs4')">
+      <span class="nav-dot" style="background:#a78bfa"></span> GS 4
+      <span class="nav-pct" id="nav-pct-gs4">0%</span>
+    </button>
+    <button class="nav-item" id="nav-prelims" onclick="UI.showPage('syllabus','prelims')">
+      <span class="nav-dot" style="background:#f43f5e"></span> Prelims
+      <span class="nav-pct" id="nav-pct-prelims">0%</span>
+    </button>
+    <button class="nav-item" id="nav-optional" onclick="UI.showPage('syllabus','optional')">
+      <span class="nav-dot" style="background:#06b6d4"></span> Optional
+      <span class="nav-pct" id="nav-pct-optional">0%</span>
+    </button>
+
+    <div class="nav-section-label">Insights</div>
+    <button class="nav-item" id="nav-gaps" onclick="UI.showPage('gaps')">
+      <span>◈</span> Gap analysis
+    </button>
+    <button class="nav-item" id="nav-plan" onclick="UI.showPage('plan')">
+      <span>⊞</span> Battle plan
+    </button>
+    <button class="nav-item" id="nav-stats" onclick="UI.showPage('stats')">
+      <span>◎</span> Stats
+    </button>
+  </nav>
+
+  <!-- ─── MAIN ────────────────────────────────────────────────────────────── -->
+  <main class="main" id="main">
+
+    <!-- TODAY -->
+    <div class="page active" id="page-today">
+      <div id="today-content"></div>
+    </div>
+
+    <!-- SYLLABUS -->
+    <div class="page" id="page-syllabus">
+      <div id="syllabus-content"></div>
+    </div>
+
+    <!-- GAP ANALYSIS -->
+    <div class="page" id="page-gaps">
+      <div id="gaps-content"></div>
+    </div>
+
+    <!-- BATTLE PLAN -->
+    <div class="page" id="page-plan">
+      <div id="plan-content"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="page" id="page-stats">
+      <div id="stats-content"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div id="settings-content"></div>
+    </div>
+
+  </main>
 </div>
 
-<div class="bottom-nav">
-  <button class="bnav-item active" id="bnav-home" onclick="showPage('home')">
-    <span class="bnav-icon">⌂</span><span class="bnav-label">Home</span>
+<!-- Mobile bottom nav -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="bnav-today" onclick="UI.showPage('today')">
+    <span class="bnav-icon">⊙</span><span>Today</span>
   </button>
-  <button class="bnav-item" id="bnav-gs1" onclick="showPaper('gs1')">
-    <span class="bnav-icon">①</span><span class="bnav-label">GS 1</span>
+  <button class="bnav-item" id="bnav-syllabus" onclick="UI.showPage('syllabus','gs1')">
+    <span class="bnav-icon">⊞</span><span>Syllabus</span>
   </button>
-  <button class="bnav-item" id="bnav-gs2" onclick="showPaper('gs2')">
-    <span class="bnav-icon">②</span><span class="bnav-label">GS 2</span>
+  <button class="bnav-item" id="bnav-gaps" onclick="UI.showPage('gaps')">
+    <span class="bnav-icon">◈</span><span>Gaps</span>
   </button>
-  <button class="bnav-item" id="bnav-gs3" onclick="showPaper('gs3')">
-    <span class="bnav-icon">③</span><span class="bnav-label">GS 3</span>
+  <button class="bnav-item" id="bnav-plan" onclick="UI.showPage('plan')">
+    <span class="bnav-icon">◎</span><span>Plan</span>
   </button>
-  <button class="bnav-item" id="bnav-more" onclick="showMoreMenu()">
-    <span class="bnav-icon">⋯</span><span class="bnav-label">More</span>
-  </button>
-</div>
+</nav>
 
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
+<!-- Topic detail drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="UI.closeDrawer(event)">
   <div class="drawer" id="drawer">
-    <div class="drawer-handle"></div>
+    <button class="drawer-close" onclick="UI.closeDrawer()">✕</button>
     <div id="drawer-content"></div>
-  </div>
-</div>
-
-<div class="drawer-overlay" id="more-overlay" onclick="closeMore(event)">
-  <div class="drawer" id="more-drawer">
-    <div class="drawer-handle"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:8px">
-      <button class="status-btn" onclick="closeMoreAndGo('gs4')">GS 4 — Ethics</button>
-      <button class="status-btn" onclick="closeMoreAndGo('prelims')">Prelims</button>
-      <button class="status-btn" onclick="closeMoreAndGo('optional')">Optional (Eco)</button>
-      <button class="status-btn" onclick="closeMoreAndGo('ai')">AI Assistant</button>
-    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<script src="syllabus.js"></script>
+<script src="app.js"></script>
 <script>
-const SYLLABUS = {
-  gs1:{label:'GS 1',sub:'History, Culture, Geography, Society',color:'#6366f1',
-    sections:[
-      {name:'Indian heritage & culture',topics:['Art forms — classical dance, music, theatre','Architecture — temple styles, cave art, medieval','Painting traditions — Mughal, Rajput, folk','Literature — ancient to modern','Philosophy & religion — schools of thought','UNESCO heritage sites & Intangible Heritage']},
-      {name:'Modern Indian history',topics:['1857 revolt & its aftermath','Rise of nationalism — INC phases','Gandhian era & mass movements','Revolutionary movements — Bhagat Singh, Subhas Chandra Bose','Partition & independence','Post-independence consolidation — integration of princely states']},
-      {name:'World history',topics:['Industrial Revolution & its global impact','World War I — causes, course, consequences','World War II — causes, course, consequences','Colonialism & decolonisation','Cold War & its end','Reunification — Germany, Korean question']},
-      {name:'Indian society',topics:['Diversity — caste, religion, language, region','Women & gender issues','Urbanisation trends & challenges','Globalisation & social change','Population & associated issues','Social empowerment — salient features']},
-      {name:'Geography',topics:['Physical geography — geomorphology, landforms','Climatology & monsoon','Oceanography — currents, tides','World economic geography','Indian geography — physical features','Indian geography — resources & distribution']}
-    ]},
-  gs2:{label:'GS 2',sub:'Polity, Governance, IR, Social Justice',color:'#22c55e',
-    sections:[
-      {name:'Indian polity & constitution',topics:['Historical underpinnings & making of Constitution','Preamble, salient features, amendments','Union & state executives','Parliament & state legislatures — structure & functioning','Judiciary — SC, HCs, judicial review','Federalism & centre-state relations','Local governance — 73rd & 74th amendments','Constitutional bodies','Statutory & quasi-judicial bodies']},
-      {name:'Governance',topics:['Government policies & interventions','Welfare schemes — social sector','e-Governance & technology in governance','Civil services in democracy','Citizens charters & RTI','Role of NGOs, SHGs, civil society','Transparency & accountability mechanisms']},
-      {name:'Social justice',topics:['Mechanisms for vulnerable sections','Issues relating to women & children','Issues relating to SC/ST/OBC — constitutional provisions','Poverty & hunger — data, schemes','Health — NHM, PMJAY, Ayushman Bharat','Education — NEP 2020, RTE, higher education issues']},
-      {name:'International relations',topics:['India & its neighbourhood — China, Pakistan, Bangladesh, Nepal','Bilateral groupings & agreements','Effect of foreign policies on India','Indian diaspora & soft power','International organisations — UN, WTO, IMF, World Bank','Important groupings — G20, SCO, BRICS, QUAD']}
-    ]},
-  gs3:{label:'GS 3',sub:'Economy, S&T, Environment, Security',color:'#f59e0b',
-    sections:[
-      {name:'Indian economy',topics:['Planning & economic development post-1947','Inclusive growth — issues & indicators','Government budgeting & fiscal federalism','Land reforms & land records','Effects of liberalisation 1991','Infrastructure — energy, ports, roads, railways','Investment models — PPP, hybrid annuity','Agriculture — issues, MSP, subsidies, APMC']},
-      {name:'Science & technology',topics:['Developments in IT & digital India','Space — ISRO missions, applications','Biotechnology — CRISPR, GMO, vaccines','Indigenisation of technology & IP','Nanotechnology applications','Robotics & AI — policy implications']},
-      {name:'Environment & ecology',topics:['Conservation — biodiversity, wetlands, forests','Environment impact assessment','Pollution — air, water, soil, noise','Climate change — UNFCCC, Paris Agreement, NDC','Disaster management — NDMA, Sendai Framework','Environmental degradation & sustainable development']},
-      {name:'Security',topics:['Internal security challenges — LWE, insurgency','Role of external actors in internal disturbances','Cyber security — threats, policy, CERT-In','Money laundering — PMLA, FATF','Border management — challenges, technology','Organised crime, terrorism, radicalisation']}
-    ]},
-  gs4:{label:'GS 4',sub:'Ethics, Integrity & Aptitude',color:'#a78bfa',
-    sections:[
-      {name:'Ethics & moral philosophy',topics:['Essence & determinants of ethics','Ethics in public & private life','Human values — lessons from great lives','Attitude — structure, function, formation','Aptitude & foundational values for civil services','Emotional intelligence — concepts & application']},
-      {name:'Integrity & governance',topics:['Contributions of moral thinkers — Plato to Gandhi','Laws, rules, conscience as sources of guidance','Accountability & ethical governance','Codes of ethics & conduct — AIS rules','Citizens charter & work culture','Corporate governance & business ethics']},
-      {name:'Case studies',topics:['Probity in governance','Philosophical basis of governance','Information sharing & transparency','Ethics in international relations','Utilitarian vs deontological dilemmas','Case study practice — minimum 20 sets']}
-    ]},
-  prelims:{label:'Prelims',sub:'GS Paper 1 + CSAT',color:'#f43f5e',
-    sections:[
-      {name:'GS Prelims Paper 1',topics:['Ancient & medieval history MCQs','Modern history & freedom struggle MCQs','Indian polity MCQs','Indian & world geography MCQs','Indian economy MCQs','Environment & ecology MCQs','Science & technology MCQs','Current affairs — last 18 months']},
-      {name:'CSAT Paper 2',topics:['Reading comprehension — passage types','Logical reasoning & analytical ability','Decision making & problem solving','General mental ability — analogies, series','Basic numeracy — percentages, ratios','Data interpretation — tables, charts, graphs']}
-    ]},
-  optional:{label:'Optional',sub:'Economics',color:'#06b6d4',
-    sections:[
-      {name:'Economics Paper 1',topics:['Advanced microeconomics — consumer, producer theory','Advanced macroeconomics — IS-LM, AD-AS','International economics — trade theory, BOP','Public finance — incidence, fiscal policy','Money, banking & finance — monetary policy','Growth & development — theories, indicators']},
-      {name:'Economics Paper 2',topics:['Indian economy — planning, structural change','Agriculture — land reform, green revolution, WTO','Industry & trade policy — liberalisation','Economic reforms post-1991 — LPG','Monetary & fiscal policy — RBI, budget','Current economic issues — inflation, unemployment, GST']}
-    ]}
+
+// ─── UI CONTROLLER ──────────────────────────────────────────────────────────
+
+const UI = {
+  currentPage: 'today',
+  currentPaper: 'gs1',
+  currentYear: 2027,
+  queue: [],
+  queueIndex: 0,
+  doneToday: 0,
+
+  init() {
+    DB.load();
+    this.currentYear = DB.getSetting('targetYear') || 2027;
+    const theme = DB.getSetting('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀' : '☾';
+    this.buildQueue();
+    this.updateHeader();
+    this.updateSidebarPcts();
+    this.renderToday();
+  },
+
+  buildQueue() {
+    const target = DB.getSetting('dailyTarget') || 6;
+    this.queue = Queue.build(target);
+    this.queueIndex = 0;
+    this.doneToday = 0;
+  },
+
+  updateHeader() {
+    const year = this.currentYear;
+    const pace = Plan.paceAnalysis(year);
+    const daysLeft = Plan.daysToExam(year);
+    const streak = DB.getSetting('streak') || 0;
+
+    document.getElementById('countdown-text').innerHTML =
+      `<strong>${daysLeft}</strong> days to Prelims ${year}`;
+    const dot = document.getElementById('pace-dot');
+    dot.className = `pace-dot ${pace.status}`;
+    document.getElementById('streak-chip').textContent = `🔥 ${streak} day${streak !== 1 ? 's' : ''}`;
+
+    const dueCount = Queue.stats().dueToday;
+    document.getElementById('nav-today-count').textContent = dueCount > 0 ? dueCount : '';
+  },
+
+  updateSidebarPcts() {
+    PAPER_ORDER.forEach(p => {
+      const pct = Analytics.paperCoverage(p);
+      const el = document.getElementById(`nav-pct-${p}`);
+      if (el) el.textContent = pct + '%';
+    });
+  },
+
+  showPage(page, paper) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.bnav-item').forEach(n => n.classList.remove('active'));
+
+    const pageEl = document.getElementById(`page-${page}`);
+    if (pageEl) pageEl.classList.add('active');
+
+    const navEl = document.getElementById(`nav-${page}`);
+    if (navEl) navEl.classList.add('active');
+    const bnavEl = document.getElementById(`bnav-${page}`);
+    if (bnavEl) bnavEl.classList.add('active');
+
+    this.currentPage = page;
+    if (paper) this.currentPaper = paper;
+
+    if (page === 'today') this.renderToday();
+    else if (page === 'syllabus') {
+      this.currentPaper = paper || this.currentPaper;
+      const navEl2 = document.getElementById(`nav-${this.currentPaper}`);
+      if (navEl2) navEl2.classList.add('active');
+      this.renderSyllabus();
+    }
+    else if (page === 'gaps') this.renderGaps();
+    else if (page === 'plan') this.renderPlan();
+    else if (page === 'stats') this.renderStats();
+    else if (page === 'settings') this.renderSettings();
+
+    document.getElementById('main').scrollTop = 0;
+  },
+
+  toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'dark' ? '☀' : '☾';
+    DB.setSetting('theme', next);
+  },
+
+  // ─── TODAY RENDER ──────────────────────────────────────────────────────────
+
+  renderToday() {
+    const target = DB.getSetting('dailyTarget') || 6;
+    const done = this.doneToday;
+    const total = this.queue.length;
+    const allDone = done >= total && total > 0;
+
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    const circumference = 2 * Math.PI * 18;
+    const offset = circumference - (pct / 100) * circumference;
+
+    const phase = Plan.currentPhase(this.currentYear);
+    const pace = Plan.paceAnalysis(this.currentYear);
+    const weekDone = Plan.progressThisWeek();
+    const weekTarget = Plan.weeklyTarget(this.currentYear);
+
+    let queueHTML = '';
+    if (total === 0) {
+      queueHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text3)">
+        <div style="font-size:32px;margin-bottom:12px">◎</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">No topics due today</div>
+        <div style="font-size:13px">Your SRS schedule is clear. Review the syllabus map or explore a paper.</div>
+      </div>`;
+    } else if (allDone) {
+      queueHTML = this.completionHTML(done);
+    } else {
+      this.queue.forEach((item, idx) => {
+        const isDone = idx < done;
+        const isActive = idx === done;
+        const info = SYLLABUS[item.paper];
+        const isNew = SRS.isNew(item.rec);
+        queueHTML += `
+        <div class="queue-card ${isActive ? 'active-card' : ''} ${isDone ? 'done-card' : ''}" id="qcard-${idx}">
+          <div class="queue-card-head">
+            <div class="queue-num">${isDone ? '✓' : idx + 1}</div>
+            <div class="queue-topic">${item.topic}</div>
+            <span class="queue-paper-badge" style="background:${info.color}20;color:${info.color}">${info.label}</span>
+            <span class="queue-type-badge">${isNew ? 'New' : 'Review'}</span>
+          </div>
+          ${isActive ? `
+          <div class="rating-panel">
+            <div class="rating-label">How well did you recall this?</div>
+            <div class="rating-btns">
+              <button class="rating-btn hard" onclick="UI.rateCard(${idx}, 1)">
+                1 — Hard <span>Revisit tomorrow</span>
+              </button>
+              <button class="rating-btn okay" onclick="UI.rateCard(${idx}, 2)">
+                2 — Okay <span>Review in 3 days</span>
+              </button>
+              <button class="rating-btn easy" onclick="UI.rateCard(${idx}, 3)">
+                3 — Easy <span>Longer interval</span>
+              </button>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:12px" onclick="UI.openDrawer('${item.paper}',${item.si},${item.ti})">Notes & history</button>
+              <!-- AI_HOOK: generate questions for this topic -->
+            </div>
+          </div>` : ''}
+        </div>`;
+      });
+    }
+
+    document.getElementById('today-content').innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:2px">Today's session</div>
+      <div style="font-size:13px;color:var(--text3)">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
+    </div>
+
+    <div class="today-layout">
+      <div>
+        <div class="queue-header">
+          <div class="queue-progress">
+            <svg class="queue-ring" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--accent)" stroke-width="4"
+                stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+                stroke-linecap="round" transform="rotate(-90 22 22)"
+                style="transition:stroke-dashoffset 0.5s ease"/>
+            </svg>
+            <div>
+              <div style="font-size:15px;font-weight:600">${done} / ${total} done</div>
+              <div style="font-size:12px;color:var(--text3)">Interleaved · ${target} target</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost" onclick="UI.buildQueue();UI.renderToday();" style="font-size:12px">↺ Refresh queue</button>
+        </div>
+        ${queueHTML}
+      </div>
+
+      <div class="today-side">
+        <div class="side-card">
+          <div class="side-card-title">Current phase</div>
+          <div class="phase-name">${phase ? phase.name : '—'}</div>
+          <div class="phase-sub">${phase ? phase.goal : ''}</div>
+          <div class="phase-neuro">${phase ? phase.neuroscience : ''}</div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-card-title">This week</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+            <span style="font-size:22px;font-weight:700">${weekDone}</span>
+            <span style="font-size:12px;color:var(--text3)">target: ${weekTarget}</span>
+          </div>
+          <div class="weekly-bar-track">
+            <div class="weekly-bar-fill" style="width:${Math.min(100, Math.round(weekDone/Math.max(weekTarget,1)*100))}%"></div>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-card-title">Pace check</div>
+          <div class="pace-row">
+            <span class="pace-label">Days to exam</span>
+            <span class="pace-val">${Plan.daysToExam(this.currentYear)}</span>
+          </div>
+          <div class="pace-row">
+            <span class="pace-label">Topics left</span>
+            <span class="pace-val">${Queue.stats().unseen}</span>
+          </div>
+          <div class="pace-row">
+            <span class="pace-label">Status</span>
+            <span class="pace-val ${pace.status}">${pace.status.replace('-',' ')}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;font-style:italic">${pace.message}</div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-card-title">Due today</div>
+          <div style="display:flex;gap:12px">
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:700;color:var(--red)">${Queue.stats().overdue}</div>
+              <div style="font-size:11px;color:var(--text3)">overdue</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:700;color:var(--amber)">${Queue.stats().dueToday}</div>
+              <div style="font-size:11px;color:var(--text3)">due today</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:22px;font-weight:700;color:var(--green)">${Queue.stats().strong}</div>
+              <div style="font-size:11px;color:var(--text3)">strong</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  completionHTML(done) {
+    const streak = DB.getSetting('streak') || 0;
+    return `<div class="completion-screen show">
+      <div class="completion-icon">◎</div>
+      <div class="completion-title">Session complete</div>
+      <div class="completion-sub">You studied ${done} topic${done !== 1 ? 's' : ''} today. The pathways strengthen.</div>
+      <div class="completion-stats">
+        <div class="c-stat"><div class="c-stat-val" style="color:var(--accent)">${done}</div><div class="c-stat-label">Topics today</div></div>
+        <div class="c-stat"><div class="c-stat-val" style="color:var(--amber)">🔥 ${streak}</div><div class="c-stat-label">Day streak</div></div>
+        <div class="c-stat"><div class="c-stat-val" style="color:var(--green)">${Queue.stats().strong}</div><div class="c-stat-label">Strong topics</div></div>
+      </div>
+      <button class="btn btn-ghost" onclick="UI.buildQueue();UI.renderToday();">Load more topics</button>
+    </div>`;
+  },
+
+  rateCard(idx, score) {
+    const item = this.queue[idx];
+    if (!item) return;
+    const existing = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
+    const updated = SRS.review(existing, score);
+    DB.setRecord(item.paper, item.si, item.ti, updated);
+    this.doneToday++;
+    this.updateHeader();
+    this.updateSidebarPcts();
+    this.renderToday();
+  },
+
+  // ─── SYLLABUS RENDER ───────────────────────────────────────────────────────
+
+  renderSyllabus() {
+    const paper = this.currentPaper;
+    const info = SYLLABUS[paper];
+    const cov = Analytics.paperCoverage(paper);
+    const str = Analytics.paperStrength(paper);
+
+    let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:20px;font-weight:700">${info.label} — ${info.short}</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:2px">Coverage ${cov}% · Avg strength ${str}%</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${PAPER_ORDER.map(p => `<button class="btn ${p === paper ? 'btn-primary' : 'btn-ghost'}" style="padding:6px 10px;font-size:12px" onclick="UI.showPage('syllabus','${p}')">${SYLLABUS[p].label}</button>`).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;font-size:12px;color:var(--text3)">
+      <span>Strength:</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--bg3);border-radius:2px;display:inline-block"></span>Unseen</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:rgba(99,102,241,0.25);border-radius:2px;display:inline-block"></span>Weak</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:rgba(99,102,241,0.55);border-radius:2px;display:inline-block"></span>Moderate</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#6366f1;border-radius:2px;display:inline-block"></span>Strong</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:rgba(99,102,241,0.25);border-radius:2px;outline:1px solid var(--red);display:inline-block"></span>Hard last time</span>
+    </div>`;
+
+    info.sections.forEach((sec, si) => {
+      const secCov = sec.topics.filter((_, ti) => DB.getRecord(paper, si, ti)?.firstStudied).length;
+      html += `
+      <div class="paper-section">
+        <div class="paper-section-head" onclick="UI.toggleSection('sec-${paper}-${si}')">
+          <div class="paper-section-title">${sec.name}</div>
+          <div class="paper-section-meta">
+            <div class="prog-bar-sm"><div class="prog-fill-sm" style="width:${Math.round(secCov/sec.topics.length*100)}%;background:${info.color}"></div></div>
+            <span class="paper-cov" style="color:${info.color}">${secCov}/${sec.topics.length}</span>
+            <span style="color:var(--text3);font-size:18px" id="sec-arrow-${paper}-${si}">▾</span>
+          </div>
+        </div>
+        <div id="sec-${paper}-${si}" style="display:none">
+          <table class="topic-table">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <td style="font-size:11px;color:var(--text3);padding:6px 18px;font-weight:600">Topic</td>
+                <td class="tt-status" style="font-size:11px;color:var(--text3);padding:6px;font-weight:600">Status</td>
+                <td class="tt-score" style="font-size:11px;color:var(--text3);padding:6px;font-weight:600">Score</td>
+                <td class="tt-next" style="font-size:11px;color:var(--text3);padding:6px;font-weight:600">Next review</td>
+                <td class="tt-strength" style="font-size:11px;color:var(--text3);padding:6px;font-weight:600">Strength</td>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      sec.topics.forEach((topic, ti) => {
+        const rec = DB.getRecord(paper, si, ti);
+        const str = SRS.strength(rec);
+        const strengthLevel = str === 0 ? 0 : str < 30 ? 1 : str < 60 ? 2 : str < 85 ? 3 : 4;
+        let statusLabel, statusClass;
+        if (!rec?.firstStudied) { statusLabel = 'Unseen'; statusClass = 'new'; }
+        else if (rec.nextReview && rec.nextReview < todayStr()) { statusLabel = 'Due'; statusClass = 'due'; }
+        else if (rec.repetitions < 2) { statusLabel = 'Learning'; statusClass = 'learning'; }
+        else if (rec.lastScore === 1) { statusLabel = 'Fragile'; statusClass = 'review'; }
+        else { statusLabel = 'Strong'; statusClass = 'strong'; }
+
+        html += `<tr onclick="UI.openDrawer('${paper}',${si},${ti})">
+          <td class="tt-name">${topic}</td>
+          <td class="tt-status"><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+          <td class="tt-score">${rec?.lastScore ? ['—','Hard','Okay','Easy'][rec.lastScore] : '—'}</td>
+          <td class="tt-next">${rec?.nextReview ? formatDate(rec.nextReview) : '—'}</td>
+          <td class="tt-strength"><div class="str-bar"><div class="str-fill" style="width:${str}%;background:${info.color}"></div></div></td>
+        </tr>`;
+      });
+
+      html += `</tbody></table></div></div>`;
+    });
+
+    document.getElementById('syllabus-content').innerHTML = html;
+  },
+
+  toggleSection(id) {
+    const el = document.getElementById(id);
+    const parts = id.split('-');
+    const arrow = document.getElementById(`sec-arrow-${parts[1]}-${parts[2]}`);
+    if (el.style.display === 'none') { el.style.display = 'block'; if (arrow) arrow.textContent = '▴'; }
+    else { el.style.display = 'none'; if (arrow) arrow.textContent = '▾'; }
+  },
+
+  // ─── GAP ANALYSIS RENDER ──────────────────────────────────────────────────
+
+  renderGaps() {
+    const stats = Queue.stats();
+    let html = `
+    <div style="margin-bottom:24px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Gap analysis</div>
+      <div style="font-size:13px;color:var(--text3)">Where you are vs where you need to be. Gap score = untested + fragile topics.</div>
+    </div>
+
+    <div class="metrics-row" style="margin-bottom:24px">
+      <div class="metric">
+        <div class="metric-label">Total topics</div>
+        <div class="metric-val">${stats.total}</div>
+        <div class="metric-sub">across all papers</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Studied</div>
+        <div class="metric-val" style="color:var(--accent)">${stats.studied}</div>
+        <div class="metric-sub">${Math.round(stats.studied/stats.total*100)}% first pass</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Strong</div>
+        <div class="metric-val" style="color:var(--green)">${stats.strong}</div>
+        <div class="metric-sub">retention > 70%</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Unseen</div>
+        <div class="metric-val" style="color:var(--red)">${stats.unseen}</div>
+        <div class="metric-sub">never studied</div>
+      </div>
+    </div>
+
+    <div class="section-header"><span class="section-title">Gap score by paper</span><span class="section-sub">Lower is better</span></div>
+    <div class="gap-grid">`;
+
+    PAPER_ORDER.forEach(p => {
+      const gap = Analytics.gapScore(p);
+      const cov = Analytics.paperCoverage(p);
+      const str = Analytics.paperStrength(p);
+      const info = SYLLABUS[p];
+      const gapColor = gap > 70 ? 'var(--red)' : gap > 40 ? 'var(--amber)' : 'var(--green)';
+      html += `
+      <div class="gap-card">
+        <div class="gap-paper" style="color:${info.color}">${info.label}</div>
+        <div class="gap-score-row">
+          <div class="gap-score-val" style="color:${gapColor}">${gap}</div>
+          <div class="gap-score-label">/ 100 gap</div>
+        </div>
+        <div class="gap-bars">
+          <div class="gap-bar-row">
+            <span class="gap-bar-label">Coverage</span>
+            <div class="gap-bar-track"><div class="gap-bar-fill" style="width:${cov}%;background:${info.color}"></div></div>
+            <span class="gap-bar-val">${cov}%</span>
+          </div>
+          <div class="gap-bar-row">
+            <span class="gap-bar-label">Strength</span>
+            <div class="gap-bar-track"><div class="gap-bar-fill" style="width:${str}%;background:var(--green)"></div></div>
+            <span class="gap-bar-val">${str}%</span>
+          </div>
+          <div class="gap-bar-row">
+            <span class="gap-bar-label">Gap</span>
+            <div class="gap-bar-track"><div class="gap-bar-fill" style="width:${gap}%;background:${gapColor}"></div></div>
+            <span class="gap-bar-val">${gap}%</span>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:8px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em">How gap score works</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        Unseen topic = 1.0 gap · Rated Hard = 0.7 gap · Rated Okay = 0.3 gap · Rated Easy = 0 gap.
+        Gap score is the weighted percentage of unresolved knowledge gaps per paper.
+        A gap score below 30 means the paper is well-covered and retained.
+        <!-- AI_HOOK: personalised gap remediation suggestions -->
+      </div>
+    </div>`;
+
+    document.getElementById('gaps-content').innerHTML = html;
+  },
+
+  // ─── BATTLE PLAN RENDER ───────────────────────────────────────────────────
+
+  renderPlan() {
+    const year = this.currentYear;
+    const phases = PHASE_PLAN[year];
+    const currentPhase = Plan.currentPhase(year);
+    const pace = Plan.paceAnalysis(year);
+    const weekDone = Plan.progressThisWeek();
+    const weekTarget = Plan.weeklyTarget(year);
+    const today = todayStr();
+
+    let html = `
+    <div class="plan-header">
+      <div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:2px">Battle plan</div>
+        <div style="font-size:13px;color:var(--text3)">Neuroscience-sequenced roadmap to Prelims</div>
+      </div>
+      <div class="year-toggle">
+        <button class="year-btn ${year===2027?'active':''}" onclick="UI.setYear(2027)">CSE 2027</button>
+        <button class="year-btn ${year===2028?'active':''}" onclick="UI.setYear(2028)">CSE 2028</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+      <div class="metric">
+        <div class="metric-label">Days to Prelims</div>
+        <div class="metric-val" style="color:var(--accent)">${pace.daysLeft}</div>
+        <div class="metric-sub">Prelims ${year}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Pace status</div>
+        <div class="metric-val" style="font-size:18px;color:var(--${pace.status==='on-track'?'green':pace.status==='watch'?'amber':'red'})">${pace.status.replace('-',' ')}</div>
+        <div class="metric-sub">${pace.message}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">This week</div>
+        <div class="metric-val">${weekDone}<span style="font-size:14px;color:var(--text3)"> / ${weekTarget}</span></div>
+        <div class="metric-sub">topics · ${Math.round(weekDone/Math.max(weekTarget,1)*100)}% of weekly target</div>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-bottom:16px">
+      <span class="section-title">Phase timeline</span>
+      <span class="section-sub">Where you are & what comes next</span>
+    </div>
+    <div class="phases-timeline">`;
+
+    phases.forEach((phase, idx) => {
+      const isPast = today > phase.end;
+      const isCurrent = today >= phase.start && today <= phase.end;
+      const isFuture = today < phase.start;
+      const phaseClass = isPast ? 'past' : isCurrent ? 'current' : '';
+      const circleClass = isPast ? 'past' : isCurrent ? 'current' : '';
+      const isLast = idx === phases.length - 1;
+
+      html += `
+      <div class="phase-block">
+        <div class="phase-line">
+          <div class="phase-circle ${circleClass}"><div class="dot"></div></div>
+          ${!isLast ? `<div class="phase-connector ${isPast?'past':''}"></div>` : ''}
+        </div>
+        <div class="phase-content ${phaseClass}">
+          <div class="phase-tag">${phase.label} ${isCurrent ? '← You are here' : ''}</div>
+          <div class="phase-title">${phase.name}</div>
+          <div class="phase-dates">${formatDate(phase.start)} → ${formatDate(phase.end)} · ${phase.weeklyTopics} topics/week · ${phase.dailyHours}h/day</div>
+          <div class="phase-goal">${phase.goal}</div>
+          <div class="phase-neuro-note">⚡ ${phase.neuroscience}</div>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:8px">
+      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">The neuroscience behind this plan</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        <strong style="color:var(--text)">Phase 1 (Encoding):</strong> Breadth-first. New neural pathways form. Spacing begins automatically via SRS.<br>
+        <strong style="color:var(--text)">Phase 2 (Consolidation):</strong> Myelin thickens on pathways you revisit. Hard topics need more repetitions — the algorithm handles this.<br>
+        <strong style="color:var(--text)">Phase 3 (Integration):</strong> Interleaving across subjects builds flexible retrieval — better than blocked practice even if it feels harder.<br>
+        <strong style="color:var(--text)">Phase 4 (Retrieval):</strong> Testing yourself is 2x more effective than re-reading. Every mock test is a study session, not just measurement.
+      </div>
+    </div>`;
+
+    document.getElementById('plan-content').innerHTML = html;
+  },
+
+  setYear(year) {
+    this.currentYear = year;
+    DB.setSetting('targetYear', year);
+    this.updateHeader();
+    this.renderPlan();
+  },
+
+  // ─── STATS RENDER ─────────────────────────────────────────────────────────
+
+  renderStats() {
+    const activity = Analytics.activityLast90Days();
+    const stats = Queue.stats();
+    const streak = DB.getSetting('streak') || 0;
+
+    const maxActivity = Math.max(...activity.map(d => d.count), 1);
+    const heatCells = activity.map(d => {
+      const lvl = d.count === 0 ? 0 : d.count < 3 ? 1 : d.count < 6 ? 2 : 3;
+      return `<div class="ah-cell l${lvl}" title="${d.date}: ${d.count} topics"></div>`;
+    }).join('');
+
+    let html = `
+    <div style="margin-bottom:24px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Stats</div>
+      <div style="font-size:13px;color:var(--text3)">Your preparation fingerprint</div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric">
+        <div class="metric-label">Study streak</div>
+        <div class="metric-val" style="color:var(--amber)">🔥 ${streak}</div>
+        <div class="metric-sub">consecutive days</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Topics studied</div>
+        <div class="metric-val" style="color:var(--accent)">${stats.studied}</div>
+        <div class="metric-sub">of ${stats.total} total</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Strong topics</div>
+        <div class="metric-val" style="color:var(--green)">${stats.strong}</div>
+        <div class="metric-sub">retention > 70%</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Due for review</div>
+        <div class="metric-val" style="color:var(--red)">${stats.dueToday}</div>
+        <div class="metric-sub">today</div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px">Activity — last 90 days</div>
+      <div class="activity-heatmap">${heatCells}</div>
+      <div style="display:flex;gap:8px;margin-top:6px;font-size:11px;color:var(--text3)">
+        <span>Less</span>
+        <div class="ah-cell" style="width:11px;height:11px;display:inline-block;flex-shrink:0"></div>
+        <div class="ah-cell l1" style="width:11px;height:11px;display:inline-block;flex-shrink:0"></div>
+        <div class="ah-cell l2" style="width:11px;height:11px;display:inline-block;flex-shrink:0"></div>
+        <div class="ah-cell l3" style="width:11px;height:11px;display:inline-block;flex-shrink:0"></div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px">Strength by paper</div>
+      ${PAPER_ORDER.map(p => {
+        const cov = Analytics.paperCoverage(p);
+        const str = Analytics.paperStrength(p);
+        const info = SYLLABUS[p];
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="color:var(--text)">${info.label}</span>
+            <span style="color:var(--text3)">${cov}% covered · ${str}% strength</span>
+          </div>
+          <div style="display:flex;gap:4px">
+            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:${cov}%;background:${info.color};border-radius:999px"></div>
+            </div>
+            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:${str}%;background:var(--green);border-radius:999px"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:3px;font-size:10px;color:var(--text3)">
+            <span style="flex:1">Coverage</span><span style="flex:1">Retention</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    document.getElementById('stats-content').innerHTML = html;
+  },
+
+  // ─── SETTINGS RENDER ──────────────────────────────────────────────────────
+
+  renderSettings() {
+    const target = DB.getSetting('dailyTarget') || 6;
+    document.getElementById('settings-content').innerHTML = `
+    <div style="font-size:20px;font-weight:700;margin-bottom:24px">Settings</div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px">Study preferences</div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Daily topic target: <strong id="target-display">${target}</strong></div>
+        <input type="range" min="3" max="12" step="1" value="${target}" style="width:100%" oninput="document.getElementById('target-display').textContent=this.value" onchange="DB.setSetting('dailyTarget',parseInt(this.value));UI.buildQueue();">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px"><span>3 (light)</span><span>6 (balanced)</span><span>12 (intensive)</span></div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Target exam year</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ${this.currentYear===2027?'btn-primary':'btn-ghost'}" onclick="UI.setYear(2027)">CSE 2027</button>
+          <button class="btn ${this.currentYear===2028?'btn-primary':'btn-ghost'}" onclick="UI.setYear(2028)">CSE 2028</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px">Data</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="UI.exportData()">Export backup</button>
+        <label class="btn btn-ghost" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="UI.importData(event)"></label>
+        <button class="btn btn-danger" onclick="UI.resetAll()">Reset all progress</button>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">About Myelocus</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        Built on SM-2 spaced repetition · Interleaved queue · Neuroscience-sequenced battle plan<br>
+        <span style="color:var(--text3);font-size:12px;font-style:italic">v2.0 · "The locus where myelin forms."</span>
+      </div>
+    </div>`;
+  },
+
+  exportData() {
+    const blob = new Blob([DB.export()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `myelocus_backup_${todayStr()}.json`;
+    a.click();
+  },
+
+  importData(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      try { DB.import(ev.target.result); this.init(); this.showToast('Imported successfully'); }
+      catch(err) { this.showToast('Invalid file'); }
+    };
+    r.readAsText(file);
+  },
+
+  resetAll() {
+    if (!confirm('Reset all progress? This cannot be undone.')) return;
+    localStorage.removeItem('myelocus_v2');
+    DB.load(); this.init(); this.showToast('Progress reset');
+  },
+
+  // ─── DRAWER ────────────────────────────────────────────────────────────────
+
+  openDrawer(paper, si, ti) {
+    const topic = SYLLABUS[paper].sections[si].topics[ti];
+    const rec = DB.getRecord(paper, si, ti);
+    const info = SYLLABUS[paper];
+
+    document.getElementById('drawer-content').innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:${info.color};text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${info.label}</div>
+    <div class="drawer-topic">${topic}</div>
+
+    <div class="drawer-section">
+      <div class="drawer-label">History</div>
+      <div class="drawer-history">
+        ${rec?.firstStudied ? `First studied: ${formatDate(rec.firstStudied)}<br>` : 'Not yet studied<br>'}
+        ${rec?.lastStudied ? `Last studied: ${formatDate(rec.lastStudied)}<br>` : ''}
+        ${rec?.nextReview ? `Next review: ${formatDate(rec.nextReview)} (${rec.interval}d interval)<br>` : ''}
+        ${rec?.repetitions ? `Repetitions: ${rec.repetitions}<br>` : ''}
+        ${rec?.lastScore ? `Last confidence: ${['—','Hard','Okay','Easy'][rec.lastScore]}<br>` : ''}
+        ${rec ? `Strength: ${SRS.strength(rec)}%` : ''}
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-label">Notes</div>
+      <textarea class="field-input" id="d-notes" placeholder="Key points, sources, doubts, connections...">${rec?.notes || ''}</textarea>
+      <button class="btn btn-primary" style="margin-top:8px;font-size:12px" onclick="UI.saveNotes('${paper}',${si},${ti})">Save notes</button>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-label">AI features <span style="font-size:10px;color:var(--text3)">(coming soon)</span></div>
+      <button class="ai-hook-btn" disabled>
+        Explain this topic for UPSC
+        <span class="ai-hook-tag">AI_HOOK</span>
+      </button>
+      <button class="ai-hook-btn" disabled>
+        Generate 5 probable questions
+        <span class="ai-hook-tag">AI_HOOK</span>
+      </button>
+      <button class="ai-hook-btn" disabled>
+        Link to recent current affairs
+        <span class="ai-hook-tag">AI_HOOK</span>
+      </button>
+    </div>`;
+
+    document.getElementById('drawer-overlay').classList.add('open');
+  },
+
+  saveNotes(paper, si, ti) {
+    const k = DB.key(paper, si, ti);
+    if (!DB.data[k]) DB.data[k] = SRS.newRecord();
+    DB.data[k].notes = document.getElementById('d-notes').value;
+    DB.save();
+    this.showToast('Notes saved');
+  },
+
+  closeDrawer(e) {
+    if (e && e.target !== document.getElementById('drawer-overlay')) return;
+    document.getElementById('drawer-overlay').classList.remove('open');
+  },
+
+  // ─── TOAST ─────────────────────────────────────────────────────────────────
+
+  showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
 };
 
-const QUOTES = [
-  "The locus where myelin forms.",
-  "The future depends on what you do today.",
-  "Strength does not come from physical capacity. It comes from an indomitable will.",
-  "In a gentle way, you can shake the world.",
-  "The best way to find yourself is to lose yourself in the service of others."
-];
+// Boot
+UI.init();
 
-let db = {};
-let currentPaper = 'gs1';
-let activeDrawer = null;
-let activePageId = 'home';
-let aiType = 'mains';
-
-function loadDB(){
-  try{ db = JSON.parse(localStorage.getItem('myelocus_db')||'{}'); }catch(e){ db={}; }
-}
-function saveDB(){
-  localStorage.setItem('myelocus_db', JSON.stringify(db));
-  showToast('Saved');
-}
-function key(p,si,ti){ return p+'_'+si+'_'+ti; }
-function getEntry(p,si,ti){ return db[key(p,si,ti)]||{}; }
-function getStatus(p,si,ti){ return getEntry(p,si,ti).status||'pending'; }
-function setStatus(p,si,ti,s){
-  const k=key(p,si,ti);
-  if(!db[k]) db[k]={};
-  db[k].status=s;
-  if(s==='done'||s==='revision') db[k].revised=todayStr();
-  saveDB();
-}
-function todayStr(){ return new Date().toISOString().split('T')[0]; }
-function daysSince(d){ return d?Math.floor((Date.now()-new Date(d))/(86400000)):999; }
-
-function getPaperStats(p){
-  let total=0,done=0,started=0,rev=0,overdue=0;
-  SYLLABUS[p].sections.forEach((s,si)=>s.topics.forEach((_,ti)=>{
-    total++;
-    const st=getStatus(p,si,ti);
-    if(st==='done'){done++;if(daysSince(getEntry(p,si,ti).revised)>14)overdue++;}
-    else if(st==='started')started++;
-    else if(st==='revision')rev++;
-  }));
-  return{total,done,started,rev,overdue,pct:total?Math.round(done/total*100):0};
-}
-
-function getAllStats(){
-  let t=0,d=0,s=0,r=0,ov=0;
-  Object.keys(SYLLABUS).forEach(p=>{const st=getPaperStats(p);t+=st.total;d+=st.done;s+=st.started;r+=st.rev;ov+=st.overdue;});
-  return{total:t,done:d,started:s,revision:r,overdue:ov,pct:t?Math.round(d/t*100):0};
-}
-
-function getRevisionTag(p,si,ti){
-  const e=getEntry(p,si,ti);
-  if(e.status!=='done'&&e.status!=='revision') return '';
-  const d=daysSince(e.revised);
-  if(d>14) return '<span class="tag tag-due">Revise now</span>';
-  if(d>7) return '<span class="tag tag-soon">Revise soon</span>';
-  return '<span class="tag tag-ok">Revised</span>';
-}
-
-function renderHome(){
-  const all = getAllStats();
-  const today = new Date();
-  const quote = QUOTES[today.getDate()%QUOTES.length];
-
-  let recentTopics = [];
-  Object.keys(SYLLABUS).forEach(p=>{
-    SYLLABUS[p].sections.forEach((s,si)=>s.topics.forEach((t,ti)=>{
-      const e=getEntry(p,si,ti);
-      if(e.revised) recentTopics.push({p,si,ti,topic:t,revised:e.revised,status:e.status,paper:SYLLABUS[p].label});
-    }));
-  });
-  recentTopics.sort((a,b)=>b.revised.localeCompare(a.revised));
-  const recent = recentTopics.slice(0,5);
-
-  let revDue = recentTopics.filter(t=>daysSince(t.revised)>14&&t.status==='done');
-
-  let html = `
-  <div class="welcome">
-    <div class="welcome-quote">"${quote}"</div>
-    <div class="welcome-date">${today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
-  </div>
-
-  <div class="metrics">
-    <div class="metric">
-      <div class="metric-label">Overall coverage</div>
-      <div class="metric-val" style="color:var(--accent)">${all.pct}%</div>
-      <div class="metric-sub">${all.done} of ${all.total} topics</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Revision due</div>
-      <div class="metric-val" style="color:var(--red)">${all.overdue}</div>
-      <div class="metric-sub">topics overdue</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">In progress</div>
-      <div class="metric-val" style="color:var(--blue)">${all.started}</div>
-      <div class="metric-sub">topics started</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Remaining</div>
-      <div class="metric-val">${all.total-all.done}</div>
-      <div class="metric-sub">topics pending</div>
-    </div>
-  </div>`;
-
-  html += `<div style="margin-bottom:20px">`;
-  Object.keys(SYLLABUS).forEach(p=>{
-    const s=getPaperStats(p);
-    const info=SYLLABUS[p];
-    html+=`<div class="paper-card" onclick="showPaper('${p}')">
-      <div class="paper-head">
-        <div class="paper-info">
-          <div class="paper-title">${info.label}</div>
-          <div class="paper-sub">${info.sub} · ${s.done}/${s.total} done</div>
-        </div>
-        <span class="paper-pct" style="color:${info.color}">${s.pct}%</span>
-      </div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${s.pct}%;background:${info.color}"></div></div>
-    </div>`;
-  });
-  html+=`</div>`;
-
-  if(revDue.length>0){
-    html+=`<div style="margin-bottom:8px;font-size:12px;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;font-weight:600">⚠ Revision overdue</div>`;
-    revDue.slice(0,4).forEach(t=>{
-      html+=`<div class="topic-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px" onclick="openDrawer('${t.p}',${t.si},${t.ti})">
-        <div class="status-ring done"></div>
-        <div class="topic-info"><div class="topic-name">${t.topic}</div><div class="topic-meta">${t.paper} · Last revised ${daysSince(t.revised)}d ago</div></div>
-        <span class="tag tag-due">Overdue</span>
-      </div>`;
-    });
-  }
-
-  document.getElementById('page-home').innerHTML = html;
-}
-
-function renderPaper(p){
-  const info = SYLLABUS[p];
-  const stats = getPaperStats(p);
-  let html = `
-  <button class="back-btn" onclick="showPage('home')">← Home</button>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <div>
-      <div style="font-size:18px;font-weight:700;color:var(--text)">${info.label}</div>
-      <div style="font-size:13px;color:var(--text3)">${info.sub}</div>
-    </div>
-    <span style="font-size:24px;font-weight:700;color:${info.color}">${stats.pct}%</span>
-  </div>
-  <div class="metrics" style="margin-bottom:20px">
-    <div class="metric"><div class="metric-label">Done</div><div class="metric-val" style="color:var(--green)">${stats.done}</div></div>
-    <div class="metric"><div class="metric-label">Started</div><div class="metric-val" style="color:var(--blue)">${stats.started}</div></div>
-    <div class="metric"><div class="metric-label">Revision</div><div class="metric-val" style="color:var(--amber)">${stats.rev}</div></div>
-    <div class="metric"><div class="metric-label">Pending</div><div class="metric-val">${stats.total-stats.done-stats.started-stats.rev}</div></div>
-  </div>
-  <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Tap topic to cycle status · Tap ✎ to add notes & score</div>`;
-
-  info.sections.forEach((sec,si)=>{
-    const secDone=sec.topics.filter((_,ti)=>getStatus(p,si,ti)==='done').length;
-    html+=`<div class="section-block">
-      <div class="section-head">
-        <span class="section-title">${sec.name}</span>
-        <span class="section-count">${secDone}/${sec.topics.length}</span>
-      </div>`;
-    sec.topics.forEach((topic,ti)=>{
-      const st=getStatus(p,si,ti);
-      const e=getEntry(p,si,ti);
-      const revTag=getRevisionTag(p,si,ti);
-      const scoreTag=e.score?`<span class="tag tag-score">${e.score}%</span>`:'';
-      html+=`<div class="topic-row" onclick="cycleStatus('${p}',${si},${ti})">
-        <div class="status-ring ${st}"></div>
-        <div class="topic-info">
-          <div class="topic-name">${topic}</div>
-          <div class="topic-meta">${revTag}${scoreTag}</div>
-        </div>
-        <button class="edit-btn" onclick="event.stopPropagation();openDrawer('${p}',${si},${ti})" title="Edit">✎</button>
-      </div>`;
-    });
-    html+=`</div>`;
-  });
-
-  document.getElementById('page-paper').innerHTML = html;
-}
-
-function cycleStatus(p,si,ti){
-  const order=['pending','started','done','revision'];
-  const cur=getStatus(p,si,ti);
-  const next=order[(order.indexOf(cur)+1)%order.length];
-  setStatus(p,si,ti,next);
-  renderPaper(p);
-  if(activePageId==='home') renderHome();
-}
-
-function openDrawer(p,si,ti){
-  const topic=SYLLABUS[p].sections[si].topics[ti];
-  const e=getEntry(p,si,ti)||{};
-  const st=e.status||'pending';
-  const statuses=['pending','started','done','revision'];
-  const statusLabels={pending:'Not started',started:'In progress',done:'Completed',revision:'Needs revision'};
-
-  document.getElementById('drawer-content').innerHTML=`
-    <div class="drawer-title">${topic}</div>
-    <div class="status-btns">
-      ${statuses.map(s=>`<button class="status-btn ${st===s?'active-'+s:''}" onclick="setStatusDrawer('${p}',${si},${ti},'${s}')">${statusLabels[s]}</button>`).join('')}
-    </div>
-    <div class="field-label">Mock test score (%)</div>
-    <input class="field-input" type="number" id="d-score" min="0" max="100" value="${e.score||''}" placeholder="Leave blank if not tested">
-    <div class="field-label">Notes & key points</div>
-    <textarea class="field-input" id="d-notes" placeholder="Sources read, important facts, questions to remember...">${e.notes||''}</textarea>
-    <div class="drawer-actions">
-      <button class="btn btn-primary" onclick="saveDrawer('${p}',${si},${ti})">Save</button>
-      <button class="btn btn-ghost" onclick="closeDrawer()">Cancel</button>
-      <button class="btn btn-ai" onclick="aiForTopic('${p}',${si},${ti},'${topic.replace(/'/g,"\\'")}')">AI Questions ✦</button>
-    </div>
-    ${e.revised?`<div style="font-size:11px;color:var(--text3);margin-top:12px">Last revised: ${e.revised}</div>`:''}
-  `;
-  document.getElementById('drawer-overlay').classList.add('open');
-  activeDrawer={p,si,ti};
-}
-
-function setStatusDrawer(p,si,ti,s){
-  setStatus(p,si,ti,s);
-  openDrawer(p,si,ti);
-  if(activePageId==='paper') renderPaper(currentPaper);
-  if(activePageId==='home') renderHome();
-}
-
-function saveDrawer(p,si,ti){
-  const k=key(p,si,ti);
-  if(!db[k]) db[k]={};
-  db[k].score=document.getElementById('d-score').value;
-  db[k].notes=document.getElementById('d-notes').value;
-  saveDB();
-  closeDrawer();
-  if(activePageId==='paper') renderPaper(currentPaper);
-  if(activePageId==='home') renderHome();
-}
-
-function closeDrawer(e){
-  if(e&&e.target!==document.getElementById('drawer-overlay')) return;
-  document.getElementById('drawer-overlay').classList.remove('open');
-}
-
-function aiForTopic(p,si,ti,topic){
-  closeDrawer();
-  showPage('ai');
-  document.getElementById('ai-topic-input').value=topic;
-  generateAI(topic);
-}
-
-function renderAI(){
-  const apiKey = localStorage.getItem('myelocus_apikey')||'';
-  const keySet = apiKey.length>10;
-  document.getElementById('page-ai').innerHTML=`
-  <div style="margin-bottom:16px">
-    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">AI assistant ✦</div>
-    <div style="font-size:13px;color:var(--text3)">Generate questions, explanations & answer hints</div>
-  </div>
-
-  <div class="ai-panel">
-    <div class="ai-header">
-      <div class="ai-title"><div class="ai-dot" style="background:${keySet?'var(--green)':'var(--text3)'}"></div>Anthropic API key</div>
-      <button class="btn btn-ghost" style="font-size:12px;padding:6px 10px" onclick="toggleKeyVis()">${keySet?'Change':'Add'}</button>
-    </div>
-    <div id="key-section" style="${keySet?'display:none':''}">
-      <div class="ai-key-row">
-        <input type="password" id="api-key-input" placeholder="sk-ant-..." value="${apiKey}">
-        <button class="btn btn-primary" onclick="saveKey()">Save</button>
-      </div>
-      <div style="padding:0 16px 12px;font-size:11px;color:var(--text3)">Your key is stored only on this device. Never transmitted anywhere except Anthropic's API directly.</div>
-    </div>
-  </div>
-
-  <div class="ai-panel">
-    <div class="ai-header">
-      <div class="ai-title">Generate questions</div>
-    </div>
-    <div style="padding:12px 16px 0">
-      <input class="field-input" type="text" id="ai-topic-input" placeholder="e.g. Classical dance forms, Federalism, Monetary policy...">
-    </div>
-    <div class="ai-controls" style="margin-top:10px">
-      <button class="ai-type-btn ${aiType==='mains'?'active':''}" onclick="setAiType('mains')">Mains 250w</button>
-      <button class="ai-type-btn ${aiType==='prelims'?'active':''}" onclick="setAiType('prelims')">Prelims MCQ</button>
-      <button class="ai-type-btn ${aiType==='explain'?'active':''}" onclick="setAiType('explain')">Explain topic</button>
-      <button class="ai-type-btn ${aiType==='current'?'active':''}" onclick="setAiType('current')">Current affairs link</button>
-    </div>
-    <div style="padding:12px 16px">
-      <button class="btn btn-ai" style="width:100%;padding:12px" onclick="generateAI()">Generate ✦</button>
-    </div>
-    <div id="ai-output" class="ai-output" style="display:none"></div>
-  </div>`;
-}
-
-function toggleKeyVis(){
-  const s=document.getElementById('key-section');
-  s.style.display=s.style.display==='none'?'':'none';
-}
-function saveKey(){
-  const v=document.getElementById('api-key-input').value.trim();
-  localStorage.setItem('myelocus_apikey',v);
-  renderAI();
-  showToast('API key saved');
-}
-function setAiType(t){
-  aiType=t;
-  renderAI();
-}
-
-async function generateAI(topicOverride){
-  const topic=topicOverride||(document.getElementById('ai-topic-input')||{value:''}).value.trim();
-  if(!topic){showToast('Enter a topic first');return;}
-  const apiKey=localStorage.getItem('myelocus_apikey')||'';
-  const out=document.getElementById('ai-output');
-  out.style.display='block';
-
-  if(!apiKey||apiKey.length<20){
-    out.innerHTML=`<div style="color:var(--text3);padding:8px 0">
-      <div style="margin-bottom:8px">⚠ Add your Anthropic API key above to use AI features.</div>
-      <div style="font-size:11px">Get one free at <a href="https://console.anthropic.com" style="color:var(--accent2)">console.anthropic.com</a></div>
-    </div>`;
-    return;
-  }
-
-  const prompts={
-    mains:`You are a UPSC Mains examiner. Generate 3 high-quality GS Mains questions on "${topic}" for UPSC Civil Services examination. For each question: write the question (250 words format), then a one-line "Examiner's hint" on what the ideal answer should cover. Format clearly as Q1, Q2, Q3.`,
-    prelims:`Generate 5 UPSC Prelims-style MCQ questions on "${topic}". For each: question, 4 options (a-d), correct answer, and a one-line explanation. Make them challenging, matching actual UPSC difficulty.`,
-    explain:`Explain "${topic}" for UPSC Civil Services preparation in a crisp, structured way. Cover: (1) Core concept in 2 sentences, (2) Key facts/data points an examiner would expect, (3) Current affairs relevance, (4) Likely exam angle. Keep it under 300 words.`,
-    current:`List 5 recent developments (2024-2025) related to "${topic}" that could appear in UPSC. For each: the development, which GS paper it belongs to, and a one-line angle for an answer.`
-  };
-
-  out.innerHTML=`<span class="spinner"></span>Generating...`;
-
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,messages:[{role:'user',content:prompts[aiType]}]})
-    });
-    const data=await res.json();
-    if(data.error){out.innerHTML=`<span style="color:var(--red)">Error: ${data.error.message}</span>`;return;}
-    const text=data.content[0].text;
-    out.innerHTML=formatAIOutput(text);
-  }catch(e){
-    out.innerHTML=`<span style="color:var(--red)">Connection error. Check your API key and internet connection.</span>`;
-  }
-}
-
-function formatAIOutput(text){
-  const lines=text.split('\n').filter(l=>l.trim());
-  let html='';
-  let inBlock=false;
-  let blockContent='';
-  lines.forEach(line=>{
-    if(/^(Q\d|##|\*\*Q)/.test(line.trim())){
-      if(inBlock){html+=`<div class="q-item">${blockContent}</div>`;blockContent='';}
-      inBlock=true;
-      blockContent=`<div class="q-num">${line.replace(/\*\*/g,'')}</div>`;
-    } else if(inBlock){
-      blockContent+=`<div style="margin-top:4px">${line.replace(/\*\*/g,'<strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>')}</div>`;
-    } else {
-      html+=`<div style="margin-bottom:8px">${line}</div>`;
-    }
-  });
-  if(inBlock) html+=`<div class="q-item">${blockContent}</div>`;
-  return html||`<div>${text}</div>`;
-}
-
-function renderSettings(){
-  const apiKey=localStorage.getItem('myelocus_apikey')||'';
-  const all=getAllStats();
-  document.getElementById('page-settings').innerHTML=`
-  <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px">Settings</div>
-
-  <div class="setting-row">
-    <div><div class="setting-label">App name</div><div class="setting-sub">Myelocus — UPSC Tracker</div></div>
-  </div>
-  <div class="setting-row">
-    <div><div class="setting-label">Topics tracked</div><div class="setting-sub">${all.done} of ${all.total} completed</div></div>
-  </div>
-  <div class="setting-row">
-    <div><div class="setting-label">API key status</div><div class="setting-sub">${apiKey.length>10?'Configured ✓':'Not set'}</div></div>
-    <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="showPage('ai')">Manage</button>
-  </div>
-  <div class="setting-row">
-    <div><div class="setting-label">Export progress</div><div class="setting-sub">Download your data as JSON</div></div>
-    <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="exportData()">Export</button>
-  </div>
-  <div class="setting-row">
-    <div><div class="setting-label">Import progress</div><div class="setting-sub">Restore from a JSON backup</div></div>
-    <label class="btn btn-ghost" style="font-size:12px;padding:6px 12px;cursor:pointer">Import<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
-  </div>
-
-  <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-    <div style="font-size:12px;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em">Danger zone</div>
-    <button class="danger-btn" onclick="resetAll()">Reset all progress</button>
-  </div>
-
-  <div style="margin-top:32px;text-align:center;font-size:12px;color:var(--text3)">
-    <div style="margin-bottom:4px">Myelocus v1.0 · Neural edge</div>
-    <div style="font-style:italic">"The locus where myelin forms."</div>
-  </div>`;
-}
-
-function exportData(){
-  const blob=new Blob([JSON.stringify({db,exported:new Date().toISOString()},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='myelocus_backup.json';a.click();
-}
-function importData(e){
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.db){db=d.db;saveDB();renderHome();showToast('Imported successfully');}}catch(err){showToast('Invalid file');}};
-  r.readAsText(file);
-}
-function resetAll(){
-  if(!confirm('This will delete all your progress. Are you sure?'))return;
-  db={};localStorage.removeItem('myelocus_db');renderHome();showToast('Progress reset');
-}
-
-function showPage(id){
-  ['home','paper','ai','settings'].forEach(p=>{
-    document.getElementById('page-'+p).classList.remove('active');
-    const bn=document.getElementById('bnav-'+p);
-    if(bn) bn.classList.remove('active');
-  });
-  document.getElementById('page-'+id).classList.add('active');
-  const bn=document.getElementById('bnav-'+id);
-  if(bn) bn.classList.add('active');
-  activePageId=id;
-  if(id==='home') renderHome();
-  if(id==='ai') renderAI();
-  if(id==='settings') renderSettings();
-}
-
-function showPaper(p){
-  currentPaper=p;
-  ['home','paper','ai','settings'].forEach(pp=>{
-    document.getElementById('page-'+pp).classList.remove('active');
-    const bn=document.getElementById('bnav-'+pp);
-    if(bn) bn.classList.remove('active');
-  });
-  document.getElementById('page-paper').classList.add('active');
-  const bn=document.getElementById('bnav-'+p);
-  if(bn) bn.classList.add('active');
-  activePageId='paper';
-  renderPaper(p);
-  document.getElementById('more-overlay').classList.remove('open');
-}
-
-function showMoreMenu(){
-  document.getElementById('more-overlay').classList.add('open');
-}
-function closeMore(e){
-  if(e&&e.target!==document.getElementById('more-overlay'))return;
-  document.getElementById('more-overlay').classList.remove('open');
-}
-function closeMoreAndGo(p){
-  document.getElementById('more-overlay').classList.remove('open');
-  if(p==='ai') showPage('ai');
-  else showPaper(p);
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-loadDB();
-renderHome();
-
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
 </body>
