@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="110" fill="#0f1117"/>
+  <rect x="48" y="48" width="416" height="416" rx="90" fill="#1a1d27"/>
+  <circle cx="256" cy="230" r="100" fill="none" stroke="#6366f1" stroke-width="6" opacity="0.2"/>
+  <circle cx="256" cy="230" r="68" fill="none" stroke="#6366f1" stroke-width="6" opacity="0.35"/>
+  <circle cx="256" cy="230" r="36" fill="none" stroke="#6366f1" stroke-width="6" opacity="0.6"/>
+  <circle cx="256" cy="230" r="14" fill="#6366f1"/>
+  <line x1="256" y1="116" x2="256" y2="96" stroke="#6366f1" stroke-width="3" opacity="0.4"/>
+  <line x1="370" y1="230" x2="390" y2="230" stroke="#6366f1" stroke-width="3" opacity="0.4"/>
+  <line x1="142" y1="230" x2="122" y2="230" stroke="#6366f1" stroke-width="3" opacity="0.4"/>
+  <line x1="338" y1="148" x2="352" y2="134" stroke="#6366f1" stroke-width="3" opacity="0.4"/>
+  <line x1="174" y1="148" x2="160" y2="134" stroke="#6366f1" stroke-width="3" opacity="0.4"/>
+  <text x="256" y="370" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="44" font-weight="700" fill="#6366f1" text-anchor="middle" letter-spacing="3">MYELOCUS</text>
+  <text x="256" y="400" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" fill="#6366f1" text-anchor="middle" opacity="0.5" letter-spacing="1">UPSC TRACKER</text>
+</svg>
