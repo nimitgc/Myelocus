@@ -118,10 +118,10 @@ textarea.field{resize:vertical;min-height:72px;line-height:1.5}
 .rate-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .rate-btn{padding:9px 4px;border-radius:var(--r);border:1px solid var(--border2);background:var(--bg3);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px}
 .rate-btn span{font-size:10px;font-weight:400;color:var(--text3)}
-.rate-btn.again:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
-.rate-btn.hard:hover{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
-.rate-btn.good:hover{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
-.rate-btn.easy:hover{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.rate-btn.again:hover,.rate-btn.again.selected{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.rate-btn.hard:hover,.rate-btn.hard.selected{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.rate-btn.good:hover,.rate-btn.good.selected{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.rate-btn.easy:hover,.rate-btn.easy.selected{background:var(--green-bg);border-color:var(--green);color:var(--green)}
 .card-actions{display:flex;gap:6px;margin-top:10px}
 
 /* Side cards */
