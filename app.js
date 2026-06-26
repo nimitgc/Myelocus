@@ -1,152 +1,142 @@
-// ─── SRS ENGINE (SM-2 simplified) ───────────────────────────────────────────
-
+// ─── SRS ENGINE (SM-2, 4-point scale) ────────────────────────────────────────
 const SRS = {
-  // Default record for a new topic
   newRecord() {
     return {
-      interval: 0,       // days until next review
-      easiness: 2.5,     // difficulty factor
-      repetitions: 0,    // number of successful reviews
-      nextReview: null,  // ISO date string
-      lastScore: null,   // 1=hard, 2=okay, 3=easy
-      firstStudied: null,
-      lastStudied: null,
-      notes: '',
-      studyCount: 0
+      interval: 0, easiness: 2.5, repetitions: 0,
+      nextReview: null, lastScore: null,
+      firstStudied: null, lastStudied: null,
+      studyCount: 0, isAddition: false,
+      // Sources
+      ncert: false, ncertConf: null,
+      refBook: '', refSection: '',
+      pyqSeen: '', pyqEval: '', pyqThirdParty: false,
+      notes: ''
     };
   },
 
-  // Update record after a review session
-  // score: 1 (hard), 2 (okay), 3 (easy)
-  review(record, score) {
-    const r = { ...record };
+  // score: 1=Again, 2=Hard, 3=Good, 4=Easy
+  review(rec, score) {
+    const r = { ...rec };
     r.lastScore = score;
     r.lastStudied = todayStr();
     r.studyCount = (r.studyCount || 0) + 1;
     if (!r.firstStudied) r.firstStudied = todayStr();
 
-    if (score === 1) {
-      // Hard — reset, review tomorrow
+    if (score === 1) {           // Again — reset
       r.repetitions = 0;
       r.interval = 1;
       r.easiness = Math.max(1.3, r.easiness - 0.2);
-    } else if (score === 2) {
-      // Okay — moderate interval growth
+    } else if (score === 2) {   // Hard — short growth
+      if (r.repetitions === 0) r.interval = 1;
+      else if (r.repetitions === 1) r.interval = 2;
+      else r.interval = Math.max(1, Math.round(r.interval * 1.3));
+      r.repetitions += 1;
+    } else if (score === 3) {   // Good — normal growth
       if (r.repetitions === 0) r.interval = 1;
       else if (r.repetitions === 1) r.interval = 3;
-      else r.interval = Math.round(r.interval * 1.8);
-      r.repetitions += 1;
-    } else {
-      // Easy — fast interval growth, easiness increases
-      if (r.repetitions === 0) r.interval = 1;
-      else if (r.repetitions === 1) r.interval = 4;
       else r.interval = Math.round(r.interval * r.easiness);
+      r.repetitions += 1;
+    } else {                     // Easy — accelerated
+      if (r.repetitions === 0) r.interval = 2;
+      else if (r.repetitions === 1) r.interval = 5;
+      else r.interval = Math.round(r.interval * r.easiness * 1.2);
       r.easiness = Math.min(4.0, r.easiness + 0.1);
       r.repetitions += 1;
     }
-
     r.nextReview = addDays(todayStr(), r.interval);
     return r;
   },
 
-  // Strength score 0-100 for display
-  strength(record) {
-    if (!record || !record.lastStudied) return 0;
-    if (!record.nextReview) return 0;
-    const daysUntil = daysBetween(todayStr(), record.nextReview);
-    const totalInterval = record.interval || 1;
-    const pct = Math.max(0, Math.min(100, Math.round((daysUntil / totalInterval) * 100)));
-    if (record.lastScore === 1) return Math.min(pct, 40);
-    if (record.lastScore === 2) return Math.min(pct, 70);
+  // Seed from bulk onboarding confidence
+  seedFromConf(conf) {
+    const r = this.newRecord();
+    r.firstStudied = todayStr();
+    r.lastStudied = todayStr();
+    const map = { again: 1, hard: 2, good: 3, easy: 4 };
+    const score = map[conf] || 3;
+    return this.review(r, score);
+  },
+
+  strength(rec) {
+    if (!rec?.lastStudied) return 0;
+    if (!rec?.nextReview) return 0;
+    const daysUntil = daysBetween(todayStr(), rec.nextReview);
+    const total = rec.interval || 1;
+    const pct = Math.max(0, Math.min(100, Math.round((daysUntil / total) * 100)));
+    if (rec.lastScore === 1) return Math.min(pct, 30);
+    if (rec.lastScore === 2) return Math.min(pct, 60);
     return pct;
   },
 
-  // Is topic due today or overdue?
-  isDue(record) {
-    if (!record || !record.nextReview) return false;
-    return record.nextReview <= todayStr();
+  isDue(rec) {
+    if (!rec?.nextReview) return false;
+    return rec.nextReview <= todayStr();
   },
 
-  // Is topic new (never studied)?
-  isNew(record) {
-    return !record || !record.firstStudied;
-  }
+  isNew(rec) { return !rec?.firstStudied; }
 };
 
-// ─── DATE HELPERS ────────────────────────────────────────────────────────────
-
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
-function daysBetween(a, b) {
-  return Math.round((new Date(b) - new Date(a)) / 86400000);
-}
-
-function daysUntil(dateStr) {
-  return daysBetween(todayStr(), dateStr);
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+// ─── DATE HELPERS ─────────────────────────────────────────────────────────────
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function addDays(d, n) { const dt = new Date(d); dt.setDate(dt.getDate() + n); return dt.toISOString().split('T')[0]; }
+function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000); }
+function daysUntil(d) { return daysBetween(todayStr(), d); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
 
 // ─── DATABASE ─────────────────────────────────────────────────────────────────
-
 const DB = {
-  data: {},
-  settings: {
-    targetYear: 2027,
-    theme: 'dark',
-    dailyTarget: 6,
-    streak: 0,
-    lastActiveDate: null,
-    examDate2027: '2027-05-25',
-    examDate2028: '2028-05-25'
+  data: {}, coaching: {}, settings: {
+    targetYear: 2027, theme: 'dark', dailyTarget: 6,
+    streak: 0, lastActiveDate: null
   },
-  activityLog: {},  // date -> count of topics reviewed
+  activity: {},
+  savedQueue: null, savedQueueDate: null, savedQueueIndex: 0,
 
   load() {
     try {
-      const raw = localStorage.getItem('myelocus_v2');
+      const raw = localStorage.getItem('myelocus_v3');
       if (raw) {
-        const parsed = JSON.parse(raw);
-        this.data = parsed.data || {};
-        this.settings = { ...this.settings, ...(parsed.settings || {}) };
-        this.activityLog = parsed.activityLog || {};
+        const p = JSON.parse(raw);
+        this.data = p.data || {};
+        this.coaching = p.coaching || {};
+        this.settings = { ...this.settings, ...(p.settings || {}) };
+        this.activity = p.activity || {};
+        this.savedQueue = p.savedQueue || null;
+        this.savedQueueDate = p.savedQueueDate || null;
+        this.savedQueueIndex = p.savedQueueIndex || 0;
       }
-    } catch(e) { console.error('DB load error', e); }
+    } catch(e) { console.error(e); }
     this.updateStreak();
+    // Init coaching from syllabus if empty
+    if (!Object.keys(this.coaching).length) this.initCoaching();
+  },
+
+  initCoaching() {
+    PAPER_ORDER.forEach(p => {
+      this.coaching[p] = {};
+      SYLLABUS[p].subjects.forEach(s => {
+        this.coaching[p][s.name] = { academy: '', total: 0, completed: 0 };
+      });
+    });
   },
 
   save() {
     try {
-      localStorage.setItem('myelocus_v2', JSON.stringify({
-        data: this.data,
-        settings: this.settings,
-        activityLog: this.activityLog
+      localStorage.setItem('myelocus_v3', JSON.stringify({
+        data: this.data, coaching: this.coaching,
+        settings: this.settings, activity: this.activity,
+        savedQueue: this.savedQueue, savedQueueDate: this.savedQueueDate,
+        savedQueueIndex: this.savedQueueIndex
       }));
-    } catch(e) { console.error('DB save error', e); }
+    } catch(e) { console.error(e); }
   },
 
   key(paper, si, ti) { return `${paper}_${si}_${ti}`; },
-
-  getRecord(paper, si, ti) {
-    return this.data[this.key(paper, si, ti)] || null;
-  },
-
-  setRecord(paper, si, ti, record) {
-    this.data[this.key(paper, si, ti)] = record;
-    // Log activity
+  getRecord(paper, si, ti) { return this.data[this.key(paper, si, ti)] || null; },
+  setRecord(paper, si, ti, rec) {
+    this.data[this.key(paper, si, ti)] = rec;
     const today = todayStr();
-    this.activityLog[today] = (this.activityLog[today] || 0) + 1;
+    this.activity[today] = (this.activity[today] || 0) + 1;
     this.updateStreak();
     this.save();
   },
@@ -155,221 +145,261 @@ const DB = {
     const today = todayStr();
     const yesterday = addDays(today, -1);
     if (this.settings.lastActiveDate === today) return;
-    if (this.settings.lastActiveDate === yesterday) {
-      this.settings.streak = (this.settings.streak || 0) + 1;
-    } else if (this.settings.lastActiveDate && this.settings.lastActiveDate < yesterday) {
-      this.settings.streak = 0;
-    }
-    if (this.activityLog[today]) {
+    if (this.activity[today]) {
+      if (this.settings.lastActiveDate === yesterday) {
+        this.settings.streak = (this.settings.streak || 0) + 1;
+      } else if (!this.settings.lastActiveDate || this.settings.lastActiveDate < yesterday) {
+        this.settings.streak = 1;
+      }
       this.settings.lastActiveDate = today;
     }
   },
 
-  getSetting(key) { return this.settings[key]; },
-  setSetting(key, val) { this.settings[key] = val; this.save(); },
-
-  export() {
-    return JSON.stringify({ data: this.data, settings: this.settings, activityLog: this.activityLog, exportedAt: new Date().toISOString() }, null, 2);
+  getCoaching(paper, subjectName) {
+    return (this.coaching[paper] || {})[subjectName] || { academy: '', total: 0, completed: 0 };
   },
 
-  import(jsonStr) {
-    const parsed = JSON.parse(jsonStr);
-    this.data = parsed.data || {};
-    this.settings = { ...this.settings, ...(parsed.settings || {}) };
-    this.activityLog = parsed.activityLog || {};
+  setCoaching(paper, subjectName, data) {
+    if (!this.coaching[paper]) this.coaching[paper] = {};
+    this.coaching[paper][subjectName] = data;
+    this.save();
+  },
+
+  saveQueueState(queue, index) {
+    this.savedQueue = queue;
+    this.savedQueueDate = todayStr();
+    this.savedQueueIndex = index;
+    this.save();
+  },
+
+  export() {
+    return JSON.stringify({ data: this.data, coaching: this.coaching, settings: this.settings, activity: this.activity, exportedAt: new Date().toISOString() }, null, 2);
+  },
+
+  import(json) {
+    const p = JSON.parse(json);
+    this.data = p.data || {};
+    this.coaching = p.coaching || {};
+    this.settings = { ...this.settings, ...(p.settings || {}) };
+    this.activity = p.activity || {};
     this.save();
   }
 };
 
 // ─── QUEUE ENGINE ─────────────────────────────────────────────────────────────
-
 const Queue = {
-  // Build today's study queue
-  build(targetCount) {
-    const due = [];
-    const newTopics = [];
-
+  build(target) {
+    const due = [], newT = [];
     PAPER_ORDER.forEach(paper => {
-      SYLLABUS[paper].sections.forEach((sec, si) => {
-        sec.topics.forEach((topic, ti) => {
+      SYLLABUS[paper].subjects.forEach((subj, si) => {
+        // Official topics
+        subj.topics.forEach((topic, ti) => {
           const rec = DB.getRecord(paper, si, ti);
-          if (SRS.isDue(rec)) {
-            due.push({ paper, si, ti, topic, rec, type: 'review' });
-          } else if (SRS.isNew(rec)) {
-            newTopics.push({ paper, si, ti, topic, rec, type: 'new' });
-          }
+          const item = { paper, si, ti, topic, rec, isAddition: false };
+          if (SRS.isDue(rec)) due.push({ ...item, type: 'review' });
+          else if (SRS.isNew(rec)) newT.push({ ...item, type: 'new' });
+        });
+        // User additions
+        (subj.additions || []).forEach((topic, ai) => {
+          const ti = subj.topics.length + ai;
+          const rec = DB.getRecord(paper, si, ti);
+          const item = { paper, si, ti, topic, rec, isAddition: true };
+          if (SRS.isDue(rec)) due.push({ ...item, type: 'review' });
+          else if (SRS.isNew(rec)) newT.push({ ...item, type: 'new' });
         });
       });
     });
-
-    // Sort due by most overdue first
-    due.sort((a, b) => {
-      const da = a.rec?.nextReview || '2000-01-01';
-      const db2 = b.rec?.nextReview || '2000-01-01';
-      return da.localeCompare(db2);
-    });
-
-    // Interleave: mix papers to avoid blocked practice
-    const queue = this.interleave([...due.slice(0, targetCount), ...newTopics.slice(0, Math.max(0, targetCount - due.length))]);
-    return queue.slice(0, targetCount);
+    due.sort((a, b) => (a.rec?.nextReview || '2000').localeCompare(b.rec?.nextReview || '2000'));
+    const combined = [...due.slice(0, target), ...newT.slice(0, Math.max(0, target - due.length))];
+    return this.interleave(combined).slice(0, target);
   },
 
-  // Interleave topics so same paper doesn't appear consecutively
   interleave(items) {
     const groups = {};
-    items.forEach(item => {
-      if (!groups[item.paper]) groups[item.paper] = [];
-      groups[item.paper].push(item);
-    });
-
-    const result = [];
-    const keys = Object.keys(groups);
+    items.forEach(item => { if (!groups[item.paper]) groups[item.paper] = []; groups[item.paper].push(item); });
+    const result = [], keys = Object.keys(groups);
     let i = 0;
     while (result.length < items.length) {
-      const key = keys[i % keys.length];
-      if (groups[key] && groups[key].length > 0) {
-        result.push(groups[key].shift());
-      }
+      const k = keys[i % keys.length];
+      if (groups[k]?.length > 0) result.push(groups[k].shift());
       i++;
-      if (keys.every(k => !groups[k] || groups[k].length === 0)) break;
+      if (keys.every(k => !groups[k]?.length)) break;
     }
     return result;
   },
 
-  // Count stats for display
   stats() {
-    let total = 0, studied = 0, dueToday = 0, overdue = 0, strong = 0;
+    let total = 0, studied = 0, due = 0, overdue = 0, strong = 0;
     PAPER_ORDER.forEach(paper => {
-      SYLLABUS[paper].sections.forEach((sec, si) => {
-        sec.topics.forEach((_, ti) => {
+      SYLLABUS[paper].subjects.forEach((subj, si) => {
+        const allTopics = [...subj.topics, ...(subj.additions || [])];
+        allTopics.forEach((_, ti) => {
           total++;
           const rec = DB.getRecord(paper, si, ti);
           if (rec?.firstStudied) studied++;
           if (rec?.nextReview) {
-            if (rec.nextReview <= todayStr()) dueToday++;
+            if (rec.nextReview <= todayStr()) due++;
             if (rec.nextReview < todayStr()) overdue++;
             if (SRS.strength(rec) > 70) strong++;
           }
         });
       });
     });
-    return { total, studied, dueToday, overdue, strong, unseen: total - studied };
+    return { total, studied, due, overdue, strong, unseen: total - studied };
   }
 };
 
-// ─── BATTLE PLAN ENGINE ───────────────────────────────────────────────────────
+// ─── BATTLE PLAN ──────────────────────────────────────────────────────────────
+const PHASES = {
+  2027: [
+    { name: 'Foundation', tag: 'Phase 1', start: '2026-06-01', end: '2026-12-31', color: '#6366f1',
+      goal: 'First pass of entire syllabus. Every topic studied at least once. SRS begins.',
+      weekly: 12, daily: 3,
+      neuro: 'Encoding phase. New neural pathways form. Breadth before depth.' },
+    { name: 'Deepening', tag: 'Phase 2', start: '2027-01-01', end: '2027-03-31', color: '#22c55e',
+      goal: 'Revisit weak topics. Answer writing begins. Prelims MCQ drilling starts.',
+      weekly: 8, daily: 3,
+      neuro: 'Consolidation. Myelin thickens on frequently used pathways. Hard topics need more repetitions.' },
+    { name: 'Integration', tag: 'Phase 3', start: '2027-04-01', end: '2027-04-30', color: '#f59e0b',
+      goal: 'Full syllabus revision. Connect topics across papers. Mock tests begin.',
+      weekly: 6, daily: 3.5,
+      neuro: 'Interleaving builds flexible retrieval — better than blocked practice even if harder.' },
+    { name: 'Prelims Sprint', tag: 'Phase 4', start: '2027-05-01', end: '2027-05-25', color: '#f43f5e',
+      goal: 'Prelims-only. MCQ intensive. Current affairs final revision. Full mocks daily.',
+      weekly: 4, daily: 4,
+      neuro: 'Retrieval practice phase. Testing yourself is more effective than re-reading.' }
+  ],
+  2028: [
+    { name: 'Foundation', tag: 'Phase 1', start: '2026-06-01', end: '2027-06-30', color: '#6366f1',
+      goal: 'Thorough first pass. Deeper understanding per topic. More time per subject.',
+      weekly: 8, daily: 2.5,
+      neuro: 'Extended encoding. Slower pace allows deeper semantic processing and stronger initial traces.' },
+    { name: 'Deepening', tag: 'Phase 2', start: '2027-07-01', end: '2028-02-28', color: '#22c55e',
+      goal: 'Deep revision cycles. Answer writing. Optional mastery. Mock test series.',
+      weekly: 6, daily: 3,
+      neuro: 'Deep consolidation. Spaced repetition at longer intervals builds near-permanent retention.' },
+    { name: 'Integration', tag: 'Phase 3', start: '2028-03-01', end: '2028-04-30', color: '#f59e0b',
+      goal: 'Full integrated revision. Connect current affairs to static syllabus.',
+      weekly: 8, daily: 3.5,
+      neuro: 'Schema building. Connect disparate knowledge into unified frameworks for faster retrieval.' },
+    { name: 'Prelims Sprint', tag: 'Phase 4', start: '2028-05-01', end: '2028-05-25', color: '#f43f5e',
+      goal: 'Prelims MCQ intensive. Daily mocks. Current affairs final pass.',
+      weekly: 4, daily: 4,
+      neuro: 'Peak retrieval phase. High-frequency testing maximises Prelims performance.' }
+  ]
+};
 
 const Plan = {
-  currentPhase(year) {
+  current(year) {
     const today = todayStr();
-    const phases = PHASE_PLAN[year] || PHASE_PLAN[2027];
-    for (const phase of phases) {
-      if (today >= phase.start && today <= phase.end) return phase;
-    }
-    if (today < phases[0].start) return phases[0];
-    return phases[phases.length - 1];
+    const phases = PHASES[year] || PHASES[2027];
+    return phases.find(p => today >= p.start && today <= p.end) || (today < phases[0].start ? phases[0] : phases[phases.length - 1]);
   },
-
-  daysToExam(year) {
-    const examDate = year === 2028 ? '2028-05-25' : '2027-05-25';
-    return Math.max(0, daysUntil(examDate));
-  },
-
-  paceAnalysis(year) {
+  daysToExam(year) { return Math.max(0, daysUntil(year === 2028 ? '2028-05-25' : '2027-05-25')); },
+  pace(year) {
     const stats = Queue.stats();
     const daysLeft = this.daysToExam(year);
-    const topicsLeft = stats.total - stats.studied;
-    const dailyTarget = DB.getSetting('dailyTarget') || 6;
-
-    // How many days needed at current target pace
-    const daysNeeded = topicsLeft > 0 ? Math.ceil(topicsLeft / dailyTarget) : 0;
-
-    // Buffer days (days left minus days needed)
+    const target = DB.settings.dailyTarget || 6;
+    const daysNeeded = stats.unseen > 0 ? Math.ceil(stats.unseen / target) : 0;
     const buffer = daysLeft - daysNeeded;
-
-    let status, message;
-    if (buffer > 90) {
-      status = 'on-track';
-      message = `You have ${buffer} buffer days. Comfortable pace.`;
-    } else if (buffer > 30) {
-      status = 'watch';
-      message = `${buffer} buffer days. Maintain current pace.`;
-    } else if (buffer > 0) {
-      status = 'urgent';
-      message = `Only ${buffer} buffer days. Increase daily topics.`;
-    } else {
-      status = 'critical';
-      message = `Behind schedule by ${Math.abs(buffer)} days. Increase to ${Math.ceil(topicsLeft / daysLeft)} topics/day.`;
-    }
-
-    return { daysLeft, topicsLeft, daysNeeded, buffer, status, message, dailyTarget };
+    let status = buffer > 90 ? 'on-track' : buffer > 30 ? 'watch' : buffer > 0 ? 'urgent' : 'critical';
+    let msg = buffer > 90 ? `${buffer} buffer days. Good pace.`
+      : buffer > 30 ? `${buffer} buffer days. Maintain pace.`
+      : buffer > 0 ? `Only ${buffer} buffer days. Increase daily topics.`
+      : `Behind by ${Math.abs(buffer)} days. Need ${Math.ceil(stats.unseen / Math.max(daysLeft,1))} topics/day.`;
+    return { daysLeft, unseen: stats.unseen, daysNeeded, buffer, status, msg, target };
   },
-
-  weeklyTarget(year) {
-    const phase = this.currentPhase(year);
-    return phase ? phase.weeklyTopics : 6;
-  },
-
-  progressThisWeek() {
-    let count = 0;
+  weekDone() {
     const today = new Date();
-    const dayOfWeek = today.getDay();
+    const dow = today.getDay();
     const monday = new Date(today);
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
     const mondayStr = monday.toISOString().split('T')[0];
-
-    Object.entries(DB.activityLog).forEach(([date, cnt]) => {
-      if (date >= mondayStr) count += cnt;
-    });
-    return count;
+    return Object.entries(DB.activity).filter(([d]) => d >= mondayStr).reduce((s, [, v]) => s + v, 0);
   }
 };
 
 // ─── ANALYTICS ────────────────────────────────────────────────────────────────
-
 const Analytics = {
-  paperStrength(paper) {
-    let total = 0, strengthSum = 0;
-    SYLLABUS[paper].sections.forEach((sec, si) => {
-      sec.topics.forEach((_, ti) => {
-        total++;
-        strengthSum += SRS.strength(DB.getRecord(paper, si, ti));
-      });
-    });
-    return total ? Math.round(strengthSum / total) : 0;
-  },
-
   paperCoverage(paper) {
-    let total = 0, studied = 0;
-    SYLLABUS[paper].sections.forEach((sec, si) => {
-      sec.topics.forEach((_, ti) => {
-        total++;
-        if (DB.getRecord(paper, si, ti)?.firstStudied) studied++;
-      });
+    let total = 0, done = 0;
+    SYLLABUS[paper].subjects.forEach((s, si) => {
+      const all = [...s.topics, ...(s.additions || [])];
+      all.forEach((_, ti) => { total++; if (DB.getRecord(paper, si, ti)?.firstStudied) done++; });
     });
-    return total ? Math.round(studied / total * 100) : 0;
+    return total ? Math.round(done / total * 100) : 0;
   },
-
-  activityLast90Days() {
-    const result = [];
-    for (let i = 89; i >= 0; i--) {
-      const date = addDays(todayStr(), -i);
-      result.push({ date, count: DB.activityLog[date] || 0 });
-    }
-    return result;
+  paperStrength(paper) {
+    let total = 0, sum = 0;
+    SYLLABUS[paper].subjects.forEach((s, si) => {
+      const all = [...s.topics, ...(s.additions || [])];
+      all.forEach((_, ti) => { total++; sum += SRS.strength(DB.getRecord(paper, si, ti)); });
+    });
+    return total ? Math.round(sum / total) : 0;
   },
-
   gapScore(paper) {
-    let total = 0, gaps = 0;
-    SYLLABUS[paper].sections.forEach((sec, si) => {
-      sec.topics.forEach((_, ti) => {
+    let total = 0, gap = 0;
+    SYLLABUS[paper].subjects.forEach((s, si) => {
+      const all = [...s.topics, ...(s.additions || [])];
+      all.forEach((_, ti) => {
         total++;
         const rec = DB.getRecord(paper, si, ti);
-        if (!rec?.firstStudied) gaps++;
-        else if (rec.lastScore === 1) gaps += 0.7;
-        else if (rec.lastScore === 2) gaps += 0.3;
+        if (!rec?.firstStudied) gap++;
+        else if (rec.lastScore === 1) gap += 0.8;
+        else if (rec.lastScore === 2) gap += 0.5;
+        else if (rec.lastScore === 3) gap += 0.2;
       });
     });
-    return total ? Math.round((gaps / total) * 100) : 100;
+    return total ? Math.round(gap / total * 100) : 100;
+  },
+  activity90() {
+    const out = [];
+    for (let i = 89; i >= 0; i--) {
+      const d = addDays(todayStr(), -i);
+      out.push({ date: d, count: DB.activity[d] || 0 });
+    }
+    return out;
+  }
+};
+
+// ─── PYQ COLOR ────────────────────────────────────────────────────────────────
+function pyqColor(val) {
+  const n = parseInt(val);
+  if (!n || n === 0) return 'var(--bg4)';
+  if (n < 30) return 'var(--red)';
+  if (n < 60) return 'var(--amber)';
+  if (n < 85) return '#86efac';
+  return 'var(--green)';
+}
+
+// ─── ADDITIONS MANAGER ────────────────────────────────────────────────────────
+const Additions = {
+  add(paper, si, topic) {
+    if (!SYLLABUS[paper].subjects[si].additions) SYLLABUS[paper].subjects[si].additions = [];
+    SYLLABUS[paper].subjects[si].additions.push(topic);
+    // Persist additions to localStorage
+    const key = 'myelocus_additions';
+    try {
+      const existing = JSON.parse(localStorage.getItem(key) || '{}');
+      const k = `${paper}_${si}`;
+      if (!existing[k]) existing[k] = [];
+      existing[k].push(topic);
+      localStorage.setItem(key, JSON.stringify(existing));
+    } catch(e) {}
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem('myelocus_additions');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      Object.entries(data).forEach(([k, topics]) => {
+        const [paper, si] = k.split('_');
+        const sIdx = parseInt(si);
+        if (SYLLABUS[paper]?.subjects[sIdx]) {
+          SYLLABUS[paper].subjects[sIdx].additions = topics;
+        }
+      });
+    } catch(e) {}
   }
 };
