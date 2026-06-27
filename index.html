@@ -334,6 +334,18 @@ const UI = {
             ${isNew ? `<div class="study-prompt">
               <div class="study-msg">First time seeing this chunk. Go study it — coaching notes, NCERT, or any source. Come back when done.</div>
               <button class="study-btn" onclick="UI.markStudied(${idx})">✓ Done — I have studied this</button>
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Already studied this before? Set your existing progress:</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <select class="field" id="seed-conf-${idx}" style="flex:1;min-width:120px;padding:4px 8px;font-size:11px">
+                    <option value="1">Again — very unclear</option>
+                    <option value="2">Hard — partially clear</option>
+                    <option value="3" selected>Good — mostly clear</option>
+                    <option value="4">Easy — fully clear</option>
+                  </select>
+                  <button class="btn btn-ghost btn-sm" onclick="UI.seedFromQueue(${idx})">Seed existing</button>
+                </div>
+              </div>
             </div>` : `<div class="recall-section">
               <div class="recall-label">Attempt recall without notes — how well did you remember?</div>
               <div class="recall-btns">
@@ -461,7 +473,7 @@ const UI = {
       const bullets = DB.getBullets(paperId, subj.id);
 
       h += `<div class="subject-block">
-        <div class="subject-hdr" onclick="UI.toggleKey('${subKey}',true)">
+        <div class="subject-hdr" onclick="UI.selectSubject('${paperId}','${subj.id}');UI.toggleKey('${subKey}',true)">
           <span class="subject-name">${subj.name}</span>
           <div class="subject-meta">
             ${sStats.total > 0 ? `<div class="btrack" style="width:56px"><div class="bfill" style="width:${sStats.cov}%;background:${paper.color}"></div></div>
@@ -611,7 +623,95 @@ const UI = {
     this.toast('Deleted');
   },
 
-  selectChunk(chunkId) {
+  selectSubject(paperId, subjId) {
+    this.selectedChunkId = null;
+    this.selectedSubject = { paperId, subjId };
+    this.renderSubjectDetail(paperId, subjId);
+  },
+
+  renderSubjectDetail(paperId, subjId) {
+    const el = document.getElementById('chunk-detail');
+    if (!el) return;
+    const paper = PAPERS[paperId];
+    const subj = paper.subjects.find(s => s.id === subjId);
+    if (!subj) return;
+    const ss = Analytics.subjectStats(paperId, subjId);
+    const ch = DB.getCoaching(paperId, subjId);
+    const cpct = ch.total > 0 ? Math.round(ch.completed / ch.total * 100) : 0;
+    const totalT = ss.total || 1;
+
+    // Three bar widths
+    const barG1 = Math.round(ss.gap1 / totalT * 100);
+    const barG2 = Math.round(ss.gap2 / totalT * 100);
+    const barG3 = Math.round(ss.gap3 / totalT * 100);
+
+    el.innerHTML = `
+    <div class="chunk-detail-paper" style="color:${paper.color}">${paper.label}</div>
+    <div class="chunk-detail-name">${subj.name}</div>
+    <div class="t-meta" style="margin-bottom:16px">${ss.total} chunks · ${ss.cov}% covered · ${fmtMins(ss.totalMins)} invested</div>
+
+    ${ch.total > 0 ? `
+    <div class="detail-section">
+      <div class="detail-label">Coaching lectures</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${ch.academy||'Academy'} — ${ch.completed} of ${ch.total} done</div>
+      <div class="btrack" style="height:8px;margin-bottom:4px">
+        <div class="bfill" style="width:${cpct}%;background:${paper.color};height:100%"></div>
+      </div>
+      <div style="font-size:11px;color:${cpct>=80?'var(--c-green)':cpct>=50?'var(--c-amber)':'var(--c-red)'}">
+        ${cpct}% complete
+      </div>
+    </div>` : `
+    <div class="detail-section">
+      <div class="detail-label">Coaching lectures</div>
+      <div class="t-meta">No coaching data yet — add from the subject header</div>
+    </div>`}
+
+    <div class="detail-section">
+      <div class="detail-label">Learning pipeline</div>
+
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+          <span>First exposure</span>
+          <span style="color:${barG1>=80?'var(--c-green)':barG1>=40?'var(--c-amber)':'var(--text3)'}">${ss.gap1}/${ss.total}</span>
+        </div>
+        <div class="btrack" style="height:8px">
+          <div class="bfill" style="width:${barG1}%;background:${barG1>=80?'var(--c-green)':barG1>=40?'var(--c-amber)':'var(--c-red)'};height:100%"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+          <span>PYQ seen</span>
+          <span style="color:${barG2>=80?'var(--c-green)':barG2>=40?'var(--c-amber)':'var(--text3)'}">${ss.gap2}/${ss.total}</span>
+        </div>
+        <div class="btrack" style="height:8px">
+          <div class="bfill" style="width:${barG2}%;background:${barG2>=80?'var(--c-green)':barG2>=40?'var(--c-amber)':'var(--c-red)'};height:100%"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+          <span>PYQ attempted</span>
+          <span style="color:${barG3>=80?'var(--c-green)':barG3>=40?'var(--c-amber)':'var(--text3)'}">${ss.gap3}/${ss.total}</span>
+        </div>
+        <div class="btrack" style="height:8px">
+          <div class="bfill" style="width:${barG3}%;background:${barG3>=80?'var(--c-green)':barG3>=40?'var(--c-amber)':'var(--c-red)'};height:100%"></div>
+        </div>
+      </div>
+      <div class="t-meta" style="margin-top:8px">The gap between these three bars is where your preparation risk lives.</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">Coverage</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+        <span>Chunks studied</span>
+        <span>${ss.studied}/${ss.total}</span>
+      </div>
+      <div class="btrack" style="height:8px">
+        <div class="bfill" style="width:${ss.cov}%;background:${paper.color};height:100%"></div>
+      </div>
+    </div>`;
+  },
     this.selectedChunkId = chunkId;
     this.renderChunkDetail(chunkId);
     this.renderSyllabus();
@@ -667,22 +767,6 @@ const UI = {
     <div class="chunk-detail-paper" style="color:${foundPaper.color}">${foundPaper.label}</div>
     <div class="chunk-detail-name">${foundChunk.name}</div>
     <div class="chunk-detail-official">${foundBullet.official}</div>
-
-    <!-- Existing progress initialiser -->
-    ${!rec.firstStudied ? `<div class="detail-section" style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:12px 14px;">
-      <div class="detail-label" style="color:var(--accent)">Already studied this chunk?</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Set your existing progress — the SRS will seed itself from today.</div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-size:12px;color:var(--text2)">Confidence:</span>
-        <select class="field" id="seed-conf" style="flex:1;min-width:120px;padding:5px 8px;font-size:12px">
-          <option value="1">Again — very unclear</option>
-          <option value="2">Hard — partially clear</option>
-          <option value="3" selected>Good — mostly clear</option>
-          <option value="4">Easy — fully clear</option>
-        </select>
-        <button class="btn btn-primary btn-sm" onclick="UI.seedExisting('${chunkId}')">Mark as already studied</button>
-      </div>
-    </div>` : ''}
 
     <!-- Three gaps -->
     <div class="detail-section">
@@ -804,8 +888,18 @@ const UI = {
     if (this.currentPage === 'syllabus') this.renderSyllabus();
     this.toast(rec.gap1Done ? 'Gap 1 closed ✓' : 'Gap 1 reopened');
   },
-  setGap2(chunkId, val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap2Remaining=val; DB.setRecord(chunkId,rec); if(this.currentPage==='syllabus') this.renderSyllabus(); },
-  setGap3(chunkId, val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap3Remaining=val; DB.setRecord(chunkId,rec); if(this.currentPage==='syllabus') this.renderSyllabus(); },
+  setGap2(chunkId, val) {
+    const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap2Remaining=val; DB.setRecord(chunkId,rec);
+    if(this.currentPage==='syllabus') this.renderSyllabus();
+    const L={'all':'PYQ seen — all left','most':'PYQ seen — most left','some':'PYQ seen — some left','little':'PYQ seen — a little left','done':'PYQ seen — done ✓'};
+    this.toast(L[val]||'Saved');
+  },
+  setGap3(chunkId, val) {
+    const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap3Remaining=val; DB.setRecord(chunkId,rec);
+    if(this.currentPage==='syllabus') this.renderSyllabus();
+    const L={'all':'PYQ attempted — all left','most':'PYQ attempted — most left','some':'PYQ attempted — some left','little':'PYQ attempted — a little left','done':'PYQ attempted — done ✓'};
+    this.toast(L[val]||'Saved');
+  },
 
   toggleDetailMins(key) { const cb=document.getElementById(`dact-${key}`); const mw=document.getElementById(`damins-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
   saveDetailActivity(chunkId) {
@@ -835,14 +929,85 @@ const UI = {
     this.toast(`Seeded as ${L[conf]} ✓`);
   },
 
+  seedFromQueue(idx) {
+    const item = this.queue[idx]; if (!item) return;
+    const conf = parseInt(document.getElementById(`seed-conf-${idx}`)?.value || '3');
+    const rec = DB.getRecord(item.chunk.id) || SRS.newRecord();
+    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr(), gap1Done: true }, conf);
+    DB.setRecord(item.chunk.id, updated);
+    Queue.cardStates[idx] = { done: true, score: conf, open: false };
+    Queue.saveState();
+    this.updateHeader(); this.updateNavPcts(); this.renderToday();
+    const L = ['','Again','Hard','Good','Easy'];
+    this.toast(`Seeded as ${L[conf]} ✓`);
+  },
+
   // ── PACE ─────────────────────────────────────────────────────────────────────
   renderPace() {
     const year = this.currentYear;
     const pace = Plan.pace(year);
     const stats = Analytics.globalStats();
-    const wd = Plan.weekDone();
     const phase = Plan.currentPhase(year);
 
+    // Honest sentence — the one thing this screen should say
+    let sentence = '';
+    if (stats.total === 0) {
+      sentence = 'Add chunks to your syllabus to begin tracking your preparation.';
+    } else {
+      const covPct = Math.round(stats.studied / stats.total * 100);
+      const g3Pct = Math.round(stats.gap3 / stats.total * 100);
+      const weakestPaper = PAPER_ORDER.map(p => ({ p, ps: Analytics.paperStats(p) }))
+        .filter(x => x.ps.total > 0)
+        .sort((a,b) => a.ps.cov - b.ps.cov)[0];
+      const wp = weakestPaper ? `Weakest paper: ${PAPERS[weakestPaper.p].label} at ${weakestPaper.ps.cov}% covered.` : '';
+      if (pace.status === 'on-track') {
+        sentence = `You have seen ${covPct}% of your syllabus and attempted PYQs for ${g3Pct}%. ${pace.buffer} buffer days remain. ${wp}`;
+      } else if (pace.status === 'watch') {
+        sentence = `${covPct}% of syllabus covered but only ${g3Pct}% PYQ attempted — the gap between reading and practising is where risk lives. ${wp}`;
+      } else {
+        sentence = `Behind schedule — ${pace.unseen} chunks unseen. At current pace, you need ${Math.ceil(pace.unseen / Math.max(pace.days,1))} chunks/day minimum. ${wp}`;
+      }
+    }
+
+    // Three-bar pipeline per paper
+    let pipeH = '';
+    PAPER_ORDER.forEach(paperId => {
+      const paper = PAPERS[paperId];
+      const ps = Analytics.paperStats(paperId);
+      if (ps.total === 0) return;
+      const g1w = Math.round(ps.gap1/ps.total*100);
+      const g2w = Math.round(ps.gap2/ps.total*100);
+      const g3w = Math.round(ps.gap3/ps.total*100);
+      pipeH += `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="nav-dot" style="background:${paper.color}"></div>
+            <span style="font-size:12px;font-weight:600;color:var(--text)">${paper.label}</span>
+          </div>
+          <span class="t-meta">${ps.studied}/${ps.total} chunks · ${fmtMins(ps.totalMins)}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:var(--text3);width:88px;flex-shrink:0">First exposure</span>
+            <div class="btrack" style="flex:1;height:7px"><div class="bfill" style="width:${g1w}%;background:${paper.color};height:100%"></div></div>
+            <span style="font-size:10px;color:var(--text3);width:28px;text-align:right">${g1w}%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:var(--text3);width:88px;flex-shrink:0">PYQ seen</span>
+            <div class="btrack" style="flex:1;height:7px"><div class="bfill" style="width:${g2w}%;background:var(--c-amber);height:100%"></div></div>
+            <span style="font-size:10px;color:var(--text3);width:28px;text-align:right">${g2w}%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:var(--text3);width:88px;flex-shrink:0">PYQ attempted</span>
+            <div class="btrack" style="flex:1;height:7px"><div class="bfill" style="width:${g3w}%;background:var(--c-green);height:100%"></div></div>
+            <span style="font-size:10px;color:var(--text3);width:28px;text-align:right">${g3w}%</span>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    // Table with subject expansion
     let tableH = `<table class="pace-table">
       <thead><tr>
         <th>Paper</th><th>Coverage</th><th>Chunks</th>
@@ -897,12 +1062,30 @@ const UI = {
       </div>
     </div>
 
-    <div class="pace-numbers">
+    <!-- Honest sentence -->
+    <div style="background:var(--bg2);border:1px solid var(--accent-border);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text);line-height:1.6">${sentence}</div>
+    </div>
+
+    <!-- Three numbers -->
+    <div class="pace-numbers" style="margin-bottom:16px">
       <div class="pnum"><div class="pnum-label">Days to Prelims</div><div class="pnum-val" style="color:var(--accent)">${pace.days}</div><div class="pnum-sub">Prelims ${year}</div></div>
       <div class="pnum"><div class="pnum-label">Status</div><div class="pnum-val" style="font-size:16px;color:var(--${pace.status==='on-track'?'c-green':pace.status==='watch'?'c-amber':'c-red'})">${pace.status.replace('-',' ')}</div><div class="pnum-sub">${pace.msg}</div></div>
       <div class="pnum"><div class="pnum-label">Daily target</div><div class="pnum-val">${pace.target}</div><div class="pnum-sub">chunks/day · ${pace.unseen} unseen</div></div>
     </div>
 
+    <!-- Three-bar pipeline per paper -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+      <div class="detail-label" style="margin-bottom:14px">Pipeline by paper — the gap between bars is your preparation risk</div>
+      ${pipeH || '<div class="t-meta">No chunks added yet</div>'}
+      <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:4px;border-radius:2px;background:var(--accent)"></div><span class="t-meta">First exposure</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:4px;border-radius:2px;background:var(--c-amber)"></div><span class="t-meta">PYQ seen</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:4px;border-radius:2px;background:var(--c-green)"></div><span class="t-meta">PYQ attempted</span></div>
+      </div>
+    </div>
+
+    <!-- Pipeline health summary -->
     <div style="margin-bottom:14px">
       <div class="detail-label" style="margin-bottom:8px">Pipeline health</div>
       <div class="pipeline-row">
@@ -913,6 +1096,7 @@ const UI = {
       </div>
     </div>
 
+    <!-- Detailed table -->
     <div class="detail-label" style="margin-bottom:8px">Paper breakdown — click to expand subjects</div>
     ${tableH}`;
   },
