@@ -75,34 +75,28 @@
     </button>
   </nav>
 
-  <!-- MAIN — split pane for today + syllabus -->
+  <!-- MAIN — full width -->
   <div class="main-area" id="main-area">
-    <!-- LEFT PANE -->
-    <div class="left-pane" id="left-pane">
-      <!-- Today -->
-      <div class="page active" id="page-today">
-        <div id="today-left"></div>
-      </div>
-      <!-- Syllabus -->
-      <div class="page" id="page-syllabus">
-        <div id="syllabus-left"></div>
+    <div class="page active" id="page-today">
+      <div class="page-split">
+        <div class="page-left" id="today-left"></div>
+        <div class="page-right" id="today-right"></div>
       </div>
     </div>
-
-    <!-- DIVIDER -->
-    <div class="divider" id="divider"></div>
-
-    <!-- RIGHT PANE -->
-    <div class="right-pane" id="right-pane">
-      <!-- Today right side -->
-      <div class="page active" id="rpane-today">
-        <div id="today-right"></div>
-      </div>
-      <!-- Chunk detail -->
-      <div class="page" id="rpane-syllabus">
-        <div id="chunk-detail"></div>
-      </div>
+    <div class="page" id="page-syllabus">
+      <div id="syllabus-left"></div>
     </div>
+  </div>
+
+  <!-- FLOATING INSPECTOR -->
+  <div class="inspector-backdrop" id="inspector-backdrop" onclick="UI.closeInspector()"></div>
+  <div class="inspector" id="inspector">
+    <div class="inspector-resize" id="inspector-resize"></div>
+    <div class="inspector-header">
+      <span class="inspector-title" id="inspector-title"></span>
+      <button class="inspector-close" onclick="UI.closeInspector()" title="Close (Esc)">✕</button>
+    </div>
+    <div class="inspector-body" id="inspector-body"></div>
   </div>
 
   <!-- PACE — full width -->
@@ -144,7 +138,7 @@ const UI = {
     DB.load();
     this.currentYear = DB.settings.targetYear || 2027;
     this.applyTheme();
-    this.initSplitPane();
+    this.initInspector();
     if (!Queue.restore()) Queue.build(DB.settings.dailyTarget || 6);
     this.updateHeader();
     this.updateNavPcts();
@@ -160,46 +154,59 @@ const UI = {
     document.getElementById('theme-icon').textContent = th === 'dark' ? '☀' : '☾';
   },
 
-  // ── SPLIT PANE ──────────────────────────────────────────────────────────────
-  initSplitPane() {
-    const saved = localStorage.getItem('myelocus_split');
-    this.panelSplit = saved ? parseFloat(saved) : 55;
-    this.applySplit();
-    const divider = document.getElementById('divider');
-    if (!divider) return;
-    let dragging = false, startX = 0;
-    divider.addEventListener('mousedown', e => {
-      dragging = true; startX = e.clientX;
-      divider.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
+  // ── INSPECTOR (floating panel) ──────────────────────────────────────────────
+  initInspector() {
+    const insp = document.getElementById('inspector');
+    const resizeHandle = document.getElementById('inspector-resize');
+    if (!insp || !resizeHandle) return;
+
+    // Restore saved width
+    const savedW = localStorage.getItem('myelocus_inspector_w');
+    if (savedW) insp.style.width = savedW + 'px';
+
+    // Drag-to-resize from left edge
+    let dragging = false;
+    resizeHandle.addEventListener('mousedown', e => {
+      dragging = true;
+      document.body.style.cursor = 'ew-resize';
       document.body.style.userSelect = 'none';
+      e.preventDefault();
     });
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      const ma = document.getElementById('main-area');
-      if (!ma) return;
-      const rect = ma.getBoundingClientRect();
-      this.panelSplit = Math.max(25, Math.min(75, ((e.clientX - rect.left) / rect.width) * 100));
-      this.applySplit();
+      const rect = insp.getBoundingClientRect();
+      const newW = Math.max(360, Math.min(720, rect.right - e.clientX));
+      insp.style.width = newW + 'px';
     });
     document.addEventListener('mouseup', () => {
       if (!dragging) return;
       dragging = false;
-      divider.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      localStorage.setItem('myelocus_split', this.panelSplit);
+      localStorage.setItem('myelocus_inspector_w', parseInt(insp.style.width));
     });
+
+    // Close on Escape
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeInspector(); });
   },
 
-  applySplit() {
-    const lp = document.getElementById('left-pane');
-    if (lp) lp.style.width = this.panelSplit + '%';
+  openInspector(title, html) {
+    document.getElementById('inspector-title').textContent = title;
+    document.getElementById('inspector-body').innerHTML = html;
+    document.getElementById('inspector').classList.add('open');
+    document.getElementById('inspector-backdrop').classList.add('open');
+  },
+
+  closeInspector() {
+    document.getElementById('inspector').classList.remove('open');
+    document.getElementById('inspector-backdrop').classList.remove('open');
+    this.selectedChunkId = null;
+    this.selectedSubject = null;
+    if (this.currentPage === 'syllabus') this.renderSyllabus();
   },
 
   // ── NAVIGATION ──────────────────────────────────────────────────────────────
   go(page) {
-    // Hide all
     document.querySelectorAll('.page,.page-full').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item,.bni').forEach(n => n.classList.remove('active'));
     const ma = document.getElementById('main-area');
@@ -208,14 +215,14 @@ const UI = {
       if (ma) ma.style.display = 'none';
       document.getElementById(`page-${page}`)?.classList.add('active');
     } else {
-      if (ma) ma.style.display = 'flex';
+      if (ma) ma.style.display = '';
       document.getElementById(`page-${page}`)?.classList.add('active');
-      document.getElementById(`rpane-${page}`)?.classList.add('active');
     }
 
     document.getElementById(`nav-${page}`)?.classList.add('active');
     document.getElementById(`bnav-${page}`)?.classList.add('active');
     this.currentPage = page;
+    this.closeInspector();
 
     if (page === 'today') this.renderToday();
     else if (page === 'pace') this.renderPace();
@@ -228,14 +235,13 @@ const UI = {
     document.querySelectorAll('.page,.page-full').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item,.bni').forEach(n => n.classList.remove('active'));
     const ma = document.getElementById('main-area');
-    if (ma) ma.style.display = 'flex';
+    if (ma) ma.style.display = '';
     document.getElementById('page-syllabus')?.classList.add('active');
-    document.getElementById('rpane-syllabus')?.classList.add('active');
     document.getElementById(`nav-${paperId}`)?.classList.add('active');
     document.getElementById('bnav-syllabus')?.classList.add('active');
     this.currentPage = 'syllabus';
+    this.closeInspector();
     this.renderSyllabus();
-    this.renderChunkDetail(null);
   },
 
   updateHeader() {
@@ -307,46 +313,113 @@ const UI = {
       }
 
       Queue.current.forEach((item, idx) => {
-        const st = Queue.cardStates[idx] || { done:false, score:null, open:false };
+        const st = Queue.cardStates[idx] || { done:false, open:false };
         const rec = DB.getRecord(item.chunk.id) || {};
         const paper = PAPERS[item.paperId];
-        const g2c = SRS.gapClass(rec.gap2Remaining);
-        const g3c = SRS.gapClass(rec.gap3Remaining);
-        const bstyle = st.done ? 'done' : st.open ? 'open' : '';
+        const log = rec.activityLog || [];
 
-        qH += `<div class="qcard ${bstyle}">
-          <div class="qcard-head" onclick="UI.toggleCard(${idx})">
-            <div class="qnum" style="${st.done?'background:var(--c-green-bg);color:var(--c-green)':st.open?'background:var(--accent-bg);color:var(--accent)':''}">${st.done?'✓':idx+1}</div>
-            <div class="qchunk">${item.chunk.name}</div>
-            <div class="gap-dots">
-              <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
-              <div class="gdot ${g2c}" title="PYQ seen"></div>
-              <div class="gdot ${g3c}" title="PYQ attempted"></div>
+        // Derive stage from cumulative progress
+        const everDid = m => log.some(e => e.medium === m);
+        const hasAny = log.length > 0;
+        const hasLecture = everDid('lecture');
+        const hasNcert = everDid('ncert');
+        const hasPyqSeen = everDid('pyq-seen') || rec.gap2Remaining === 'done' || rec.gap2Remaining === 'little' || rec.gap2Remaining === 'some';
+        const hasPyqAtt = everDid('pyq-attempted') || rec.gap3Remaining === 'done' || rec.gap3Remaining === 'little';
+        const hasRef = everDid('reference');
+        const repCount = rec.repetitions || 0;
+
+        let stage, stageColor;
+        if (!hasAny && !rec.gap1Done) {
+          stage = 'Unknown'; stageColor = 'var(--text3)';
+        } else if (rec.gap1Done && !hasPyqSeen) {
+          stage = 'Exposure'; stageColor = 'var(--accent)';
+        } else if (hasPyqSeen && !hasPyqAtt) {
+          stage = 'Understanding'; stageColor = 'var(--c-amber)';
+        } else if (hasPyqAtt && repCount < 3) {
+          stage = 'Application'; stageColor = 'var(--c-amber)';
+        } else if (repCount >= 3 && repCount < 6) {
+          stage = 'Retention'; stageColor = 'var(--c-green)';
+        } else if (repCount >= 6) {
+          stage = 'Maintenance'; stageColor = 'var(--c-green)';
+        } else {
+          stage = 'Exposure'; stageColor = 'var(--accent)';
+        }
+
+        const histIcon = (has, partial) => has ? '✓' : partial ? '◐' : '○';
+        const histColor = (has, partial) => has ? 'var(--c-green)' : partial ? 'var(--c-amber)' : 'var(--text3)';
+        const pyq2partial = ['some','most','little'].includes(rec.gap2Remaining);
+        const pyq3partial = ['some','most','little'].includes(rec.gap3Remaining);
+
+        qH += `<div class="qcard2 ${st.done?'done':''}" id="qcard-${idx}">
+          <!-- Card header — always visible -->
+          <div class="qcard2-head" onclick="UI.toggleCard(${idx})">
+            <div class="qnum2" style="${st.done?'background:var(--c-green-bg);color:var(--c-green)':''}">${st.done?'✓':idx+1}</div>
+            <div style="flex:1;min-width:0">
+              <div class="qchunk2">${item.chunk.name}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+                <span style="font-size:11px;font-weight:600;color:${stageColor}">${stage}</span>
+                <span class="qpaper-badge" style="background:${paper.color}20;color:${paper.color}">${paper.label}</span>
+              </div>
             </div>
-            <span class="qpaper-badge" style="background:${paper.color}20;color:${paper.color}">${paper.label}</span>
             <span class="qarr">${st.open?'▴':'▾'}</span>
           </div>
-          ${st.open ? `<div class="qbody">
-            <div class="activity-section">
-              <div class="activity-label">Log today's session on this chunk</div>
+
+          ${st.open ? `<div class="qcard2-body">
+
+            <!-- Top: cumulative history -->
+            <div class="qcard2-section">
+              <div class="qcard2-section-label">Progress so far</div>
+              <div class="qhist-grid">
+                <div class="qhist-item">
+                  <span style="color:${histColor(rec.gap1Done,false)};font-size:13px">${histIcon(rec.gap1Done,false)}</span>
+                  <span class="qhist-label">First exposure</span>
+                </div>
+                <div class="qhist-item">
+                  <span style="color:${histColor(hasLecture,false)};font-size:13px">${histIcon(hasLecture,false)}</span>
+                  <span class="qhist-label">Lecture</span>
+                </div>
+                <div class="qhist-item">
+                  <span style="color:${histColor(hasNcert,false)};font-size:13px">${histIcon(hasNcert,false)}</span>
+                  <span class="qhist-label">NCERT</span>
+                </div>
+                <div class="qhist-item">
+                  <span style="color:${histColor(hasPyqSeen,pyq2partial)};font-size:13px">${histIcon(hasPyqSeen,pyq2partial)}</span>
+                  <span class="qhist-label">PYQ seen</span>
+                </div>
+                <div class="qhist-item">
+                  <span style="color:${histColor(hasPyqAtt,pyq3partial)};font-size:13px">${histIcon(hasPyqAtt,pyq3partial)}</span>
+                  <span class="qhist-label">PYQ attempted</span>
+                </div>
+                <div class="qhist-item">
+                  <span style="color:${histColor(hasRef,false)};font-size:13px">${histIcon(hasRef,false)}</span>
+                  <span class="qhist-label">Reference</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="qcard2-divider"></div>
+
+            <!-- Bottom: today's work -->
+            <div class="qcard2-section">
+              <div class="qcard2-section-label">Today's session</div>
               <div class="activity-rows">
-                ${[['lecture','Lecture'],['ncert','NCERT'],['pyq-seen','PYQ seen'],['pyq-attempted','PYQ attempted'],['reference','Reference/Internet']].map(([key,label]) => `
+                ${[['lecture','Lecture'],['ncert','NCERT'],['pyq-seen','PYQ seen'],['pyq-attempted','PYQ attempted'],['reference','Reference / Internet']].map(([key,label]) => `
                 <div class="activity-row">
                   <label class="activity-check">
                     <input type="checkbox" id="act-${idx}-${key}" onchange="UI.toggleMins(${idx},'${key}')">
                     <span class="alabel">${label}</span>
                   </label>
                   <div class="activity-mins" id="amins-${idx}-${key}" style="display:none">
-                    <input class="mins-input" type="number" id="mins-${idx}-${key}" min="1" max="300" placeholder="0">
+                    <input class="mins-input" type="number" id="mins-${idx}-${key}" min="1" max="300" placeholder="min">
                     <span class="mins-label">min</span>
                   </div>
                 </div>`).join('')}
               </div>
-              <div class="card-actions" style="display:flex;justify-content:space-between;align-items:center">
-                <button class="btn btn-ghost btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
-                <button class="btn btn-primary btn-sm" onclick="UI.doneCard(${idx})" style="margin-left:auto">Done ✓</button>
+              <div style="display:flex;justify-content:flex-end;margin-top:12px">
+                <button class="btn btn-primary" onclick="UI.doneCard(${idx})">Advance ✓</button>
               </div>
             </div>
+
           </div>` : ''}
         </div>`;
       });
@@ -413,14 +486,23 @@ const UI = {
 
   toggleCard(idx) { Queue.toggleCard(idx); this.renderToday(); },
   doneCard(idx) {
-    // Save any checked activity first
     const acts=[];
-    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`act-${idx}-${key}`); const mi=document.getElementById(`mins-${idx}-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
+    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{
+      const cb=document.getElementById(`act-${idx}-${key}`);
+      const mi=document.getElementById(`mins-${idx}-${key}`);
+      if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0});
+    });
     if (acts.length) Queue.logActivity(idx, acts);
-    Queue.cardStates[idx]={done:true,score:3,open:false}; Queue.saveState();
+    // Auto-close gap1 if any study medium was logged (first exposure happened)
+    const item = Queue.current[idx];
+    if (item && acts.length) {
+      const rec = DB.getRecord(item.chunk.id) || SRS.newRecord();
+      if (!rec.gap1Done) { rec.gap1Done = true; DB.setRecord(item.chunk.id, rec); }
+    }
+    Queue.cardStates[idx]={done:true,open:false}; Queue.saveState();
     this.updateHeader(); this.updateNavPcts(); this.renderToday();
     const totalMins = acts.reduce((s,a)=>s+a.mins,0);
-    this.toast(totalMins > 0 ? `Done ✓ — ${totalMins} mins logged` : 'Done ✓');
+    this.toast(totalMins > 0 ? `Advanced ✓ — ${totalMins} mins` : 'Advanced ✓');
   },
 
   renderChunkSearch(query) {
@@ -555,15 +637,7 @@ const UI = {
             ${isBulOpen ? `
             ${bullet.chunks.map(chunk => {
               const rec = DB.getRecord(chunk.id) || {};
-              const str = SRS.strength(rec);
               const isSel = this.selectedChunkId === chunk.id;
-              let sc = 'unseen';
-              if (rec.firstStudied) {
-                if (rec.nextReview && rec.nextReview < todayStr()) sc = 'due';
-                else if ((rec.repetitions||0) < 2) sc = 'studying';
-                else if ((rec.lastScore||0) <= 2) sc = 'fragile';
-                else sc = 'strong';
-              }
               return `<div class="chunk-row ${isSel?'selected':''}" onclick="UI.selectChunk('${chunk.id}')">
                 <div class="chunk-name">${chunk.name}</div>
                 <div class="gap-dots">
@@ -646,7 +720,7 @@ const UI = {
   deleteChunk(paperId, subjId, bulletId, chunkId) {
     if (!confirm('Delete this chunk and all its progress?')) return;
     DB.deleteChunk(paperId, subjId, bulletId, chunkId);
-    if (this.selectedChunkId === chunkId) { this.selectedChunkId = null; this.renderChunkDetail(null); }
+    if (this.selectedChunkId === chunkId) { this.closeInspector(); }
     this.updateHeader(); this.updateNavPcts(); this.renderSyllabus();
     this.toast('Deleted');
   },
@@ -654,15 +728,15 @@ const UI = {
   selectSubject(paperId, subjId) {
     this.selectedChunkId = null;
     this.selectedSubject = { paperId, subjId };
-    this.renderSubjectDetail(paperId, subjId);
-  },
-
-  renderSubjectDetail(paperId, subjId) {
-    const el = document.getElementById('chunk-detail');
-    if (!el) return;
     const paper = PAPERS[paperId];
     const subj = paper.subjects.find(s => s.id === subjId);
-    if (!subj) return;
+    this.openInspector(subj?.name || subjId, this.buildSubjectDetail(paperId, subjId));
+  },
+
+  buildSubjectDetail(paperId, subjId) {
+    const paper = PAPERS[paperId];
+    const subj = paper.subjects.find(s => s.id === subjId);
+    if (!subj) return '';
     const ss = Analytics.subjectStats(paperId, subjId);
     const ch = DB.getCoaching(paperId, subjId);
     const cpct = ch.total > 0 ? Math.round(ch.completed / ch.total * 100) : 0;
@@ -673,7 +747,7 @@ const UI = {
     const barG2 = Math.round(ss.gap2 / totalT * 100);
     const barG3 = Math.round(ss.gap3 / totalT * 100);
 
-    el.innerHTML = `
+    return `
     <div class="chunk-detail-paper" style="color:${paper.color}">${paper.label}</div>
     <div class="chunk-detail-name">${subj.name}</div>
     <div class="t-meta" style="margin-bottom:16px">${ss.total} chunks · ${ss.cov}% covered · ${fmtMins(ss.totalMins)} invested</div>
@@ -742,34 +816,29 @@ const UI = {
   },
   selectChunk(chunkId) {
     this.selectedChunkId = chunkId;
-    this.renderChunkDetail(chunkId);
     this.renderSyllabus();
+    const html = this.buildChunkDetail(chunkId);
+    // Find chunk name for title
+    let name = chunkId;
+    for (const pid of PAPER_ORDER) {
+      for (const subj of PAPERS[pid].subjects) {
+        for (const bullet of DB.getBullets(pid, subj.id)) {
+          const c = bullet.chunks.find(c => c.id === chunkId);
+          if (c) { name = c.name; break; }
+        }
+        if (name !== chunkId) break;
+      }
+      if (name !== chunkId) break;
+    }
+    this.openInspector(name, html);
   },
 
   openDetail(chunkId) {
-    this.selectedChunkId = chunkId;
-    if (this.currentPage !== 'syllabus') {
-      this.goPaper(this.currentPaper);
-      setTimeout(() => { this.renderChunkDetail(chunkId); }, 50);
-    } else {
-      this.renderChunkDetail(chunkId);
-    }
+    this.selectChunk(chunkId);
   },
 
   // ── CHUNK DETAIL ─────────────────────────────────────────────────────────────
-  renderChunkDetail(chunkId) {
-    const el = document.getElementById('chunk-detail');
-    if (!el) return;
-
-    if (!chunkId) {
-      el.innerHTML = `<div class="right-pane-empty">
-        <div class="icon">◎</div>
-        <div class="t-section">No chunk selected</div>
-        <div class="t-meta" style="margin-top:6px">Click any chunk in the syllabus to see its detail here</div>
-      </div>`;
-      return;
-    }
-
+  buildChunkDetail(chunkId) {
     // Find chunk
     let foundChunk=null, foundBullet=null, foundPaper=null, foundPaperId=null;
     for (const paperId of PAPER_ORDER) {
@@ -782,7 +851,7 @@ const UI = {
       }
       if (foundChunk) break;
     }
-    if (!foundChunk) { el.innerHTML='<div class="t-meta" style="padding:20px">Chunk not found</div>'; return; }
+    if (!foundChunk) return '<div class="t-meta" style="padding:20px">Chunk not found</div>';
 
     const rec = DB.getRecord(chunkId) || SRS.newRecord();
     const totalM = SRS.totalMins(rec);
@@ -792,7 +861,7 @@ const UI = {
     const recent = (rec.activityLog||[]).slice(-6).reverse();
     const ML = {lecture:'Lecture',ncert:'NCERT','pyq-seen':'PYQ seen','pyq-attempted':'PYQ attempted',reference:'Reference/Internet'};
 
-    el.innerHTML = `
+    return `
     <div class="chunk-detail-paper" style="color:${foundPaper.color}">${foundPaper.label}</div>
     <div class="chunk-detail-name">${foundChunk.name}</div>
     <div class="chunk-detail-official">${foundBullet.official}</div>
@@ -894,7 +963,7 @@ const UI = {
     const rec = DB.getRecord(chunkId) || SRS.newRecord();
     rec.gap1Done = !rec.gap1Done;
     DB.setRecord(chunkId, rec);
-    this.renderChunkDetail(chunkId);
+    document.getElementById('inspector-body').innerHTML = this.buildChunkDetail(chunkId);
     if (this.currentPage === 'syllabus') this.renderSyllabus();
     this.toast(rec.gap1Done ? 'Gap 1 closed ✓' : 'Gap 1 reopened');
   },
