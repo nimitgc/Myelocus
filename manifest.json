@@ -1,15 +1,14 @@
 {
   "name": "Myelocus — UPSC Tracker",
   "short_name": "Myelocus",
-  "description": "The locus where myelin forms — UPSC Civil Services preparation tracker",
+  "description": "The locus where myelin forms — UPSC Civil Services daily execution tool",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1117",
   "theme_color": "#0f1117",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
-    { "src": "icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
   "categories": ["education", "productivity"],
   "lang": "en-IN"

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-palette="cool">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,140 +13,255 @@
 <body>
 <div class="shell">
 
-  <header class="hdr">
+  <!-- HEADER -->
+  <header class="header">
     <div class="logo">
-      <div class="logo-m">M</div>
-      <div><div class="logo-t">Myelocus</div><div class="logo-s">Build your neural edge</div></div>
+      <div class="logo-mark">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="7" cy="7" r="6" stroke="white" stroke-width="1.2" opacity=".3"/>
+          <circle cx="7" cy="7" r="4" stroke="white" stroke-width="1.2" opacity=".6"/>
+          <circle cx="7" cy="7" r="2" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">Myelocus</div>
+        <div class="logo-sub">Build your neural edge</div>
+      </div>
     </div>
-    <div class="hdr-c">
-      <div class="chip"><div class="pdot" id="pdot"></div><span id="cdown">—</span></div>
+    <div class="header-center">
+      <div class="countdown-chip">
+        <div class="pace-dot on-track" id="pace-dot"></div>
+        <span id="cdown-text"><strong>—</strong> days to Prelims</span>
+      </div>
     </div>
-    <div class="hdr-r">
-      <div class="streak" id="streak">🔥 0 days</div>
-      <button class="ibtn" onclick="UI.toggleTheme()" id="tbtn" title="Theme">☀</button>
-      <button class="ibtn" onclick="UI.go('onboard')" title="Bulk onboard">⊕</button>
-      <button class="ibtn" onclick="UI.go('settings')" title="Settings">⚙</button>
+    <div class="header-right">
+      <div class="streak-chip" id="streak-chip">🔥 0 days</div>
+      <button class="hbtn" onclick="UI.toggleTheme()" id="theme-icon" title="Toggle theme">☀</button>
+      <button class="hbtn" onclick="UI.go('settings')" title="Settings">⚙</button>
     </div>
   </header>
 
+  <!-- SIDEBAR -->
   <nav class="sidebar">
-    <div class="nlbl">Study</div>
-    <button class="nitem active" id="nav-today" onclick="UI.go('today')">
-      <span>⊙</span> Today's queue <span class="npct" id="ndue"></span>
+    <div class="nav-section">Study</div>
+    <button class="nav-item active" id="nav-today" onclick="UI.go('today')">
+      <span>⊙</span> Today's queue
+      <span class="nav-badge" id="nav-due-badge" style="display:none"></span>
     </button>
-    <div class="nlbl">Syllabus</div>
-    <button class="nitem" id="nav-gs1" onclick="UI.goPaper('gs1')"><span class="ndot" style="background:#6366f1"></span>GS 1<span class="npct" id="np-gs1">0%</span></button>
-    <button class="nitem" id="nav-gs2" onclick="UI.goPaper('gs2')"><span class="ndot" style="background:#22c55e"></span>GS 2<span class="npct" id="np-gs2">0%</span></button>
-    <button class="nitem" id="nav-gs3" onclick="UI.goPaper('gs3')"><span class="ndot" style="background:#f59e0b"></span>GS 3<span class="npct" id="np-gs3">0%</span></button>
-    <button class="nitem" id="nav-gs4" onclick="UI.goPaper('gs4')"><span class="ndot" style="background:#a78bfa"></span>GS 4<span class="npct" id="np-gs4">0%</span></button>
-    <button class="nitem" id="nav-prelims" onclick="UI.goPaper('prelims')"><span class="ndot" style="background:#f43f5e"></span>Prelims<span class="npct" id="np-prelims">0%</span></button>
-    <button class="nitem" id="nav-optional" onclick="UI.goPaper('optional')"><span class="ndot" style="background:#06b6d4"></span>Optional<span class="npct" id="np-optional">0%</span></button>
-    <div class="nlbl">Insights</div>
-    <button class="nitem" id="nav-gaps" onclick="UI.go('gaps')"><span>◈</span>Gap analysis</button>
-    <button class="nitem" id="nav-plan" onclick="UI.go('plan')"><span>⊞</span>Battle plan</button>
-    <button class="nitem" id="nav-stats" onclick="UI.go('stats')"><span>◎</span>Stats</button>
+
+    <div class="nav-section">Syllabus</div>
+    <button class="nav-item" id="nav-gs1" onclick="UI.goPaper('gs1')">
+      <span class="nav-dot" style="background:#818cf8"></span>GS 1<span class="nav-pct" id="np-gs1">—</span>
+    </button>
+    <button class="nav-item" id="nav-gs2" onclick="UI.goPaper('gs2')">
+      <span class="nav-dot" style="background:#4ade80"></span>GS 2<span class="nav-pct" id="np-gs2">—</span>
+    </button>
+    <button class="nav-item" id="nav-gs3" onclick="UI.goPaper('gs3')">
+      <span class="nav-dot" style="background:#fbbf24"></span>GS 3<span class="nav-pct" id="np-gs3">—</span>
+    </button>
+    <button class="nav-item" id="nav-gs4" onclick="UI.goPaper('gs4')">
+      <span class="nav-dot" style="background:#c084fc"></span>GS 4<span class="nav-pct" id="np-gs4">—</span>
+    </button>
+    <button class="nav-item" id="nav-prelims" onclick="UI.goPaper('prelims')">
+      <span class="nav-dot" style="background:#f87171"></span>Prelims<span class="nav-pct" id="np-prelims">—</span>
+    </button>
+    <button class="nav-item" id="nav-optional" onclick="UI.goPaper('optional')">
+      <span class="nav-dot" style="background:#22d3ee"></span>Optional<span class="nav-pct" id="np-optional">—</span>
+    </button>
+
+    <div class="nav-section">Insights</div>
+    <button class="nav-item" id="nav-pace" onclick="UI.go('pace')">
+      <span>◎</span> Pace
+    </button>
   </nav>
 
-  <main class="main" id="main">
-    <div class="page active" id="page-today"><div id="c-today"></div></div>
-    <div class="page" id="page-syllabus"><div id="c-syllabus"></div></div>
-    <div class="page" id="page-gaps"><div id="c-gaps"></div></div>
-    <div class="page" id="page-plan"><div id="c-plan"></div></div>
-    <div class="page" id="page-stats"><div id="c-stats"></div></div>
-    <div class="page" id="page-onboard"><div id="c-onboard"></div></div>
-    <div class="page" id="page-settings"><div id="c-settings"></div></div>
-  </main>
-</div>
+  <!-- MAIN — split pane for today + syllabus -->
+  <div class="main-area" id="main-area">
+    <!-- LEFT PANE -->
+    <div class="left-pane" id="left-pane">
+      <!-- Today -->
+      <div class="page active" id="page-today">
+        <div id="today-left"></div>
+      </div>
+      <!-- Syllabus -->
+      <div class="page" id="page-syllabus">
+        <div id="syllabus-left"></div>
+      </div>
+    </div>
 
+    <!-- DIVIDER -->
+    <div class="divider" id="divider"></div>
+
+    <!-- RIGHT PANE -->
+    <div class="right-pane" id="right-pane">
+      <!-- Today right side -->
+      <div class="page active" id="rpane-today">
+        <div id="today-right"></div>
+      </div>
+      <!-- Chunk detail -->
+      <div class="page" id="rpane-syllabus">
+        <div id="chunk-detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PACE — full width -->
+  <div class="page-full" id="page-pace">
+    <div id="c-pace"></div>
+  </div>
+
+  <!-- SETTINGS — full width -->
+  <div class="page-full" id="page-settings">
+    <div id="c-settings"></div>
+  </div>
+
+</div><!-- .shell -->
+
+<!-- Mobile bottom nav -->
 <nav class="bnav">
   <button class="bni active" id="bnav-today" onclick="UI.go('today')"><span class="bnic">⊙</span><span>Today</span></button>
   <button class="bni" id="bnav-syllabus" onclick="UI.goPaper('gs1')"><span class="bnic">⊞</span><span>Syllabus</span></button>
-  <button class="bni" id="bnav-gaps" onclick="UI.go('gaps')"><span class="bnic">◈</span><span>Gaps</span></button>
-  <button class="bni" id="bnav-plan" onclick="UI.go('plan')"><span class="bnic">◎</span><span>Plan</span></button>
-  <button class="bni" id="bnav-onboard" onclick="UI.go('onboard')"><span class="bnic">⊕</span><span>Onboard</span></button>
+  <button class="bni" id="bnav-pace" onclick="UI.go('pace')"><span class="bnic">◎</span><span>Pace</span></button>
+  <button class="bni" id="bnav-settings" onclick="UI.go('settings')"><span class="bnic">⚙</span><span>Settings</span></button>
 </nav>
 
-<div class="overlay" id="doverlay" onclick="UI.closeDr(event)">
-  <div class="drawer"><button class="dclose" onclick="UI.closeDr()">✕</button><div id="dcontent"></div></div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script src="syllabus.js"></script>
-<script src="app.js"></script>
+<script src="engine.js"></script>
 <script>
+
+// ── UI CONTROLLER ─────────────────────────────────────────────────────────────
 const UI = {
-  page: 'today', paper: 'gs1', year: 2027,
-  queue: [], cardStates: {},
+  currentPage: 'today',
+  currentPaper: 'gs1',
+  currentYear: 2027,
+  selectedChunkId: null,
+  expanded: {}, // tracks open subjects and bullets
+  panelSplit: 55,
 
   init() {
-    DB.load(); Additions.load();
-    this.year = DB.settings.targetYear || 2027;
+    DB.load();
+    this.currentYear = DB.settings.targetYear || 2027;
+    this.applyTheme();
+    this.initSplitPane();
+    if (!Queue.restore()) Queue.build(DB.settings.dailyTarget || 6);
+    this.updateHeader();
+    this.updateNavPcts();
+    this.renderToday();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  },
+
+  applyTheme() {
     const th = DB.settings.theme || 'dark';
+    const pa = DB.settings.palette || 'cool';
     document.documentElement.setAttribute('data-theme', th);
-    document.getElementById('tbtn').textContent = th === 'dark' ? '☀' : '☾';
-    this.queue = Queue.build(DB.settings.dailyTarget || 6);
-    this.initStates();
-    this.refresh();
-    this.rToday();
+    document.documentElement.setAttribute('data-palette', pa);
+    document.getElementById('theme-icon').textContent = th === 'dark' ? '☀' : '☾';
   },
 
-  initStates() {
-    this.cardStates = {};
-    this.queue.forEach((_, i) => { this.cardStates[i] = { done: false, score: null, open: false }; });
-  },
-
-  refresh() {
-    const pace = Plan.pace(this.year);
-    const days = Plan.daysToExam(this.year);
-    const streak = DB.settings.streak || 0;
-    document.getElementById('cdown').innerHTML = `<strong>${days}</strong> days to Prelims ${this.year}`;
-    document.getElementById('pdot').className = `pdot ${pace.status}`;
-    document.getElementById('streak').textContent = `🔥 ${streak} day${streak !== 1 ? 's' : ''}`;
-    const due = Queue.stats().due;
-    document.getElementById('ndue').textContent = due > 0 ? due : '';
-    PAPER_ORDER.forEach(p => {
-      const el = document.getElementById(`np-${p}`);
-      if (el) el.textContent = Analytics.paperCoverage(p) + '%';
+  // ── SPLIT PANE ──────────────────────────────────────────────────────────────
+  initSplitPane() {
+    const saved = localStorage.getItem('myelocus_split');
+    this.panelSplit = saved ? parseFloat(saved) : 55;
+    this.applySplit();
+    const divider = document.getElementById('divider');
+    if (!divider) return;
+    let dragging = false, startX = 0;
+    divider.addEventListener('mousedown', e => {
+      dragging = true; startX = e.clientX;
+      divider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const ma = document.getElementById('main-area');
+      if (!ma) return;
+      const rect = ma.getBoundingClientRect();
+      this.panelSplit = Math.max(25, Math.min(75, ((e.clientX - rect.left) / rect.width) * 100));
+      this.applySplit();
+    });
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      divider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      localStorage.setItem('myelocus_split', this.panelSplit);
     });
   },
 
-  go(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nitem,.bni').forEach(n => n.classList.remove('active'));
-    const pel = document.getElementById(`page-${page}`);
-    if (pel) pel.classList.add('active');
-    document.getElementById(`nav-${page}`)?.classList.add('active');
-    document.getElementById(`bnav-${page}`)?.classList.add('active');
-    this.page = page;
-    const m = document.getElementById('main');
-    if (m) m.scrollTop = 0;
-    if (page === 'today') this.rToday();
-    else if (page === 'gaps') this.rGaps();
-    else if (page === 'plan') this.rPlan();
-    else if (page === 'stats') this.rStats();
-    else if (page === 'onboard') this.rOnboard();
-    else if (page === 'settings') this.rSettings();
+  applySplit() {
+    const lp = document.getElementById('left-pane');
+    if (lp) lp.style.width = this.panelSplit + '%';
   },
 
-  goPaper(p) {
-    this.paper = p;
-    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-    document.querySelectorAll('.nitem,.bni').forEach(n => n.classList.remove('active'));
+  // ── NAVIGATION ──────────────────────────────────────────────────────────────
+  go(page) {
+    // Hide all
+    document.querySelectorAll('.page,.page-full').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item,.bni').forEach(n => n.classList.remove('active'));
+    const ma = document.getElementById('main-area');
+
+    if (page === 'pace' || page === 'settings') {
+      if (ma) ma.style.display = 'none';
+      document.getElementById(`page-${page}`)?.classList.add('active');
+    } else {
+      if (ma) ma.style.display = 'flex';
+      document.getElementById(`page-${page}`)?.classList.add('active');
+      document.getElementById(`rpane-${page}`)?.classList.add('active');
+    }
+
+    document.getElementById(`nav-${page}`)?.classList.add('active');
+    document.getElementById(`bnav-${page}`)?.classList.add('active');
+    this.currentPage = page;
+
+    if (page === 'today') this.renderToday();
+    else if (page === 'pace') this.renderPace();
+    else if (page === 'settings') this.renderSettings();
+  },
+
+  goPaper(paperId) {
+    this.currentPaper = paperId;
+    this.selectedChunkId = null;
+    document.querySelectorAll('.page,.page-full').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item,.bni').forEach(n => n.classList.remove('active'));
+    const ma = document.getElementById('main-area');
+    if (ma) ma.style.display = 'flex';
     document.getElementById('page-syllabus')?.classList.add('active');
-    document.getElementById(`nav-${p}`)?.classList.add('active');
+    document.getElementById('rpane-syllabus')?.classList.add('active');
+    document.getElementById(`nav-${paperId}`)?.classList.add('active');
     document.getElementById('bnav-syllabus')?.classList.add('active');
-    this.page = 'syllabus';
-    const m = document.getElementById('main');
-    if (m) m.scrollTop = 0;
-    this.rSyllabus();
+    this.currentPage = 'syllabus';
+    this.renderSyllabus();
+    this.renderChunkDetail(null);
+  },
+
+  updateHeader() {
+    const year = this.currentYear;
+    const pace = Plan.pace(year);
+    const streak = DB.settings.streak || 0;
+    document.getElementById('cdown-text').innerHTML = `<strong>${pace.days}</strong> days to Prelims ${year}`;
+    document.getElementById('pace-dot').className = `pace-dot ${pace.status}`;
+    document.getElementById('streak-chip').textContent = `🔥 ${streak} day${streak !== 1 ? 's' : ''}`;
+    const stats = Analytics.globalStats();
+    const badge = document.getElementById('nav-due-badge');
+    if (badge) { badge.textContent = stats.due; badge.style.display = stats.due > 0 ? '' : 'none'; }
+  },
+
+  updateNavPcts() {
+    PAPER_ORDER.forEach(p => {
+      const el = document.getElementById(`np-${p}`);
+      if (!el) return;
+      const stats = Analytics.paperStats(p);
+      el.textContent = stats.total > 0 ? stats.cov + '%' : '—';
+    });
   },
 
   toggleTheme() {
-    const cur = document.documentElement.getAttribute('data-theme');
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    document.getElementById('tbtn').textContent = next === 'dark' ? '☀' : '☾';
-    DB.settings.theme = next; DB.save();
+    DB.settings.theme = DB.settings.theme === 'dark' ? 'light' : 'dark';
+    DB.save(); this.applyTheme();
   },
 
   toast(msg) {
@@ -156,696 +271,683 @@ const UI = {
   },
 
   // ── TODAY ────────────────────────────────────────────────────────────────────
-  rToday() {
+  renderToday() {
     const target = DB.settings.dailyTarget || 6;
-    const total = this.queue.length;
-    const doneCount = Object.values(this.cardStates).filter(s => s.done).length;
-    const pct = total > 0 ? Math.round(doneCount / total * 100) : 0;
+    const total = Queue.current.length;
+    const done = Queue.doneCount();
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
     const circ = 2 * Math.PI * 18;
     const offset = circ - (pct / 100) * circ;
-    const phase = Plan.current(this.year);
-    const pace = Plan.pace(this.year);
+    const phase = Plan.currentPhase(this.currentYear);
+    const pace = Plan.pace(this.currentYear);
     const wd = Plan.weekDone();
-    const wt = phase?.weekly || 6;
-    const stats = Queue.stats();
-    const SC = ['','#ef4444','#f59e0b','#3b82f6','#22c55e'];
+    const stats = Analytics.globalStats();
+    const SC = ['','#f87171','#fbbf24','#3b82f6','#4ade80'];
     const SL = ['','Again','Hard','Good','Easy'];
 
     let qH = '';
     if (total === 0) {
+      const hasChunks = DB.getAllChunks().length > 0;
       qH = `<div style="text-align:center;padding:40px 20px;color:var(--text3)">
-        <div style="font-size:32px;margin-bottom:12px">◎</div>
-        <div style="font-size:15px;font-weight:600;margin-bottom:6px">No topics due today</div>
-        <div style="font-size:13px">SRS schedule is clear. Browse the Syllabus map to study something new.</div>
+        <div style="font-size:28px;margin-bottom:10px">◎</div>
+        <div class="t-section" style="margin-bottom:6px">${hasChunks ? 'No chunks due today' : 'Your syllabus is empty'}</div>
+        <div class="t-meta">${hasChunks ? 'SRS schedule is clear. Browse the syllabus to study new chunks.' : 'Go to GS 1, GS 2, etc. in the sidebar and add your UPSC bullets and chunks.'}</div>
       </div>`;
     } else {
-      if (doneCount >= total) {
-        const streak = DB.settings.streak || 0;
+      if (done >= total) {
         qH += `<div class="done-scr">
           <div class="done-icon">◎</div>
           <div class="done-t">Session complete</div>
-          <div class="done-s">All ${doneCount} topics done today. The pathways strengthen.</div>
+          <div class="done-s">All ${done} chunks done. The pathways strengthen.</div>
           <div class="done-stats">
-            <div class="ds"><div class="dsv" style="color:var(--accent)">${doneCount}</div><div class="dsl">Today</div></div>
-            <div class="ds"><div class="dsv" style="color:var(--amber)">🔥${streak}</div><div class="dsl">Streak</div></div>
-            <div class="ds"><div class="dsv" style="color:var(--green)">${stats.strong}</div><div class="dsl">Strong</div></div>
+            <div class="ds"><div class="dsv" style="color:var(--accent)">${done}</div><div class="dsl">Today</div></div>
+            <div class="ds"><div class="dsv" style="color:var(--c-amber)">🔥${DB.settings.streak||0}</div><div class="dsl">Streak</div></div>
+            <div class="ds"><div class="dsv" style="color:var(--c-green)">${stats.strong}</div><div class="dsl">Strong</div></div>
           </div>
-          <button class="btn btn-g" onclick="UI.queue=Queue.build(${target});UI.initStates();UI.rToday();">Load more topics</button>
+          <button class="btn btn-ghost" onclick="Queue.build(${target});UI.renderToday();">Load more</button>
         </div>`;
       }
-      this.queue.forEach((item, idx) => {
-        const st = this.cardStates[idx] || { done: false, score: null, open: false };
-        const isNew = SRS.isNew(item.rec);
-        const info = SYLLABUS[item.paper];
-        const bstyle = st.done ? 'border-color:var(--green)' : st.open ? 'border-color:var(--accent)' : '';
-        const nstyle = st.done ? 'background:var(--gbg);color:var(--green)' : st.open ? 'background:var(--abg);color:var(--accent2)' : '';
 
-        qH += `<div class="qcard" style="${bstyle}" id="qc${idx}">
-          <div class="qcard-hd" onclick="UI.toggleCard(${idx})">
-            <div class="qnum" style="${nstyle}">${st.done ? '✓' : idx + 1}</div>
-            <div class="qtopic">${item.topic}${item.isAddition ? ' <span style="font-size:10px;color:var(--cyan)">[+]</span>' : ''}</div>
-            <span class="qpaper" style="background:${info.color}20;color:${info.color}">${info.label}</span>
-            ${st.done && st.score
-              ? `<span style="font-size:11px;font-weight:600;color:${SC[st.score]}">${SL[st.score]}</span>`
-              : `<span class="qtype">${isNew ? 'New' : 'Review'}</span>`}
-            <span class="qarr">${st.open ? '▴' : '▾'}</span>
+      Queue.current.forEach((item, idx) => {
+        const st = Queue.cardStates[idx] || { done:false, score:null, open:false };
+        const rec = DB.getRecord(item.chunk.id) || {};
+        const isNew = SRS.isNew(DB.getRecord(item.chunk.id)) && !st.done;
+        const paper = PAPERS[item.paperId];
+        const g2c = SRS.gapClass(rec.gap2Remaining);
+        const g3c = SRS.gapClass(rec.gap3Remaining);
+        const bstyle = st.done ? 'done' : st.open ? 'open' : '';
+
+        qH += `<div class="qcard ${bstyle}">
+          <div class="qcard-head" onclick="UI.toggleCard(${idx})">
+            <div class="qnum" style="${st.done?'background:var(--c-green-bg);color:var(--c-green)':st.open?'background:var(--accent-bg);color:var(--accent)':''}">${st.done?'✓':idx+1}</div>
+            <div class="qchunk">${item.chunk.name}</div>
+            <div class="gap-dots">
+              <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
+              <div class="gdot ${g2c}" title="PYQ seen"></div>
+              <div class="gdot ${g3c}" title="PYQ attempted"></div>
+            </div>
+            <span class="qpaper-badge" style="background:${paper.color}20;color:${paper.color}">${paper.label}</span>
+            ${st.done && st.score ? `<span class="qscore-badge" style="color:${SC[st.score]}">${SL[st.score]}</span>` : `<span class="qtype-badge">${isNew?'New':'Review'}</span>`}
+            <span class="qarr">${st.open?'▴':'▾'}</span>
           </div>
           ${st.open ? `<div class="qbody">
-            ${isNew && !st.done ? `
-              <div class="study-msg">Go study this topic — NCERT, coaching notes, or any source you use. Come back and mark it done.</div>
-              <button class="study-btn" onclick="UI.markDone(${idx})">✓ Done — I have studied this</button>` : ''}
-            ${!isNew || st.done ? `
-              <div class="rate-lbl">${st.done ? 'Change rating:' : 'Recall without notes — how well did you remember?'}</div>
-              <div class="rate-btns">
-                <button class="rbtn ag ${st.score===1?'sel':''}" onclick="UI.rate(${idx},1)">Again<span>Blank</span></button>
-                <button class="rbtn hd ${st.score===2?'sel':''}" onclick="UI.rate(${idx},2)">Hard<span>Gaps</span></button>
-                <button class="rbtn gd ${st.score===3?'sel':''}" onclick="UI.rate(${idx},3)">Good<span>Effort</span></button>
-                <button class="rbtn ez ${st.score===4?'sel':''}" onclick="UI.rate(${idx},4)">Easy<span>Instant</span></button>
-              </div>` : ''}
-            <button class="btn btn-g btn-sm" onclick="event.stopPropagation();UI.openDr('${item.paper}',${item.si},${item.ti})">Notes & sources</button>
+            ${isNew ? `<div class="study-prompt">
+              <div class="study-msg">First time seeing this chunk. Go study it — coaching notes, NCERT, or any source. Come back when done.</div>
+              <button class="study-btn" onclick="UI.markStudied(${idx})">✓ Done — I have studied this</button>
+            </div>` : `<div class="recall-section">
+              <div class="recall-label">Attempt recall without notes — how well did you remember?</div>
+              <div class="recall-btns">
+                <button class="rbtn ag ${st.score===1?'sel':''}" onclick="UI.rateCard(${idx},1)">Again<span class="rsub">Blank</span></button>
+                <button class="rbtn hd ${st.score===2?'sel':''}" onclick="UI.rateCard(${idx},2)">Hard<span class="rsub">Gaps</span></button>
+                <button class="rbtn gd ${st.score===3?'sel':''}" onclick="UI.rateCard(${idx},3)">Good<span class="rsub">Effort</span></button>
+                <button class="rbtn ez ${st.score===4?'sel':''}" onclick="UI.rateCard(${idx},4)">Easy<span class="rsub">Instant</span></button>
+              </div>
+            </div>`}
+            <div class="activity-section">
+              <div class="activity-label">Log today's activity on this chunk</div>
+              <div class="activity-rows">
+                ${[['lecture','Lecture'],['ncert','NCERT'],['pyq-seen','PYQ seen'],['pyq-attempted','PYQ attempted'],['reference','Reference/Internet']].map(([key,label]) => `
+                <div class="activity-row">
+                  <label class="activity-check">
+                    <input type="checkbox" id="act-${idx}-${key}" onchange="UI.toggleMins(${idx},'${key}')">
+                    <span class="alabel">${label}</span>
+                  </label>
+                  <div class="activity-mins" id="amins-${idx}-${key}" style="display:none">
+                    <input class="mins-input" type="number" id="mins-${idx}-${key}" min="1" max="300" placeholder="0">
+                    <span class="mins-label">min</span>
+                  </div>
+                </div>`).join('')}
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-primary btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
+                <button class="btn btn-ghost btn-sm" onclick="UI.openDetail('${item.chunk.id}')">Full detail →</button>
+              </div>
+            </div>
           </div>` : ''}
         </div>`;
       });
     }
 
-    document.getElementById('c-today').innerHTML = `
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:18px">
-      <div class="ph">Today's session</div>
-      <div class="ps">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
+    // Left pane
+    document.getElementById('today-left').innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">
+      <div class="t-page">Today</div>
+      <div class="t-meta">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
     </div>
-    <div class="today-grid">
-      <div>
-        <div class="qhdr">
-          <div class="ring-w">
-            <svg width="44" height="44" viewBox="0 0 44 44">
-              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--bg3)" stroke-width="4"/>
-              <circle cx="22" cy="22" r="18" fill="none" stroke="var(--accent)" stroke-width="4"
-                stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"
-                transform="rotate(-90 22 22)" style="transition:stroke-dashoffset 0.5s ease"/>
-            </svg>
-            <div class="ring-i"><h4>${doneCount} / ${total} done</h4><p>Interleaved · target ${target}</p></div>
-          </div>
-          <button class="btn btn-g btn-sm" onclick="UI.queue=Queue.build(${target});UI.initStates();UI.rToday();">↺ Refresh</button>
-        </div>
-        ${qH}
+    <div class="session-ring-wrap">
+      <svg width="44" height="44" viewBox="0 0 44 44">
+        <circle cx="22" cy="22" r="18" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+        <circle cx="22" cy="22" r="18" fill="none" stroke="var(--accent)" stroke-width="4"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 22 22)"
+          style="transition:stroke-dashoffset 0.5s ease"/>
+      </svg>
+      <div class="ring-info"><h3>${done} / ${total} done</h3><p>Interleaved · target ${target}</p></div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="Queue.build(${target});UI.renderToday();">↺ Refresh</button>
+    </div>
+    ${qH}`;
+
+    // Right pane
+    document.getElementById('today-right').innerHTML = `<div class="today-side">
+      <div class="scard">
+        <div class="scard-t">Current phase</div>
+        <div class="t-section" style="margin-bottom:4px">${phase?.name||'—'}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">${phase?.note||''}</div>
       </div>
-      <div class="sstack">
-        <div class="scard">
-          <div class="stitle">Current phase</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px">${phase?.name||'—'}</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.5">${phase?.goal||''}</div>
-          <div class="neuro">⚡ ${phase?.neuro||''}</div>
+      <div class="scard">
+        <div class="scard-t">This week</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+          <span style="font-size:18px;font-weight:600">${wd}</span>
+          <span class="t-meta">target: ${phase?.weekly||6}</span>
         </div>
-        <div class="scard">
-          <div class="stitle">This week</div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-            <span style="font-size:20px;font-weight:700">${wd}</span>
-            <span style="font-size:11px;color:var(--text3)">target: ${wt}</span>
-          </div>
-          <div class="btrack"><div class="bfill" style="width:${Math.min(100,Math.round(wd/Math.max(wt,1)*100))}%;background:var(--accent)"></div></div>
-        </div>
-        <div class="scard">
-          <div class="stitle">Pace check</div>
-          <div class="pline"><span class="lbl">Days to exam</span><span class="val">${pace.daysLeft}</span></div>
-          <div class="pline"><span class="lbl">Unseen topics</span><span class="val">${pace.unseen}</span></div>
-          <div class="pline"><span class="lbl">Status</span><span class="val ${pace.status}">${pace.status.replace('-',' ')}</span></div>
-          <div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">${pace.msg}</div>
-        </div>
-        <div class="scard">
-          <div class="stitle">Today</div>
-          <div style="display:flex;gap:12px">
-            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--red)">${stats.overdue}</div><div style="font-size:11px;color:var(--text3)">overdue</div></div>
-            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--amber)">${Math.max(0,stats.due-stats.overdue)}</div><div style="font-size:11px;color:var(--text3)">due</div></div>
-            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--green)">${stats.strong}</div><div style="font-size:11px;color:var(--text3)">strong</div></div>
-            <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:var(--text3)">${stats.unseen}</div><div style="font-size:11px;color:var(--text3)">unseen</div></div>
-          </div>
+        <div class="btrack"><div class="bfill" style="width:${Math.min(100,Math.round(wd/Math.max(phase?.weekly||6,1)*100))}%;background:var(--accent)"></div></div>
+      </div>
+      <div class="scard">
+        <div class="scard-t">Pace</div>
+        <div class="pace-row"><span class="lbl">Days to exam</span><span class="val">${pace.days}</span></div>
+        <div class="pace-row"><span class="lbl">Unseen chunks</span><span class="val">${pace.unseen}</span></div>
+        <div class="pace-row"><span class="lbl">Status</span><span class="val ${pace.status}">${pace.status.replace('-',' ')}</span></div>
+        <div class="t-meta" style="margin-top:6px;font-style:italic">${pace.msg}</div>
+      </div>
+      <div class="scard">
+        <div class="scard-t">Queue breakdown</div>
+        <div style="display:flex;gap:12px">
+          <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--c-red)">${stats.overdue}</div><div class="t-meta">overdue</div></div>
+          <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--c-amber)">${Math.max(0,stats.due-stats.overdue)}</div><div class="t-meta">due</div></div>
+          <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--c-green)">${stats.strong}</div><div class="t-meta">strong</div></div>
+          <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--text3)">${stats.unseen}</div><div class="t-meta">unseen</div></div>
         </div>
       </div>
     </div>`;
   },
 
-  toggleCard(idx) {
-    const wasOpen = this.cardStates[idx]?.open;
-    Object.keys(this.cardStates).forEach(k => { this.cardStates[k].open = false; });
-    if (this.cardStates[idx]) this.cardStates[idx].open = !wasOpen;
-    this.rToday();
-  },
-
-  markDone(idx) {
-    const item = this.queue[idx]; if (!item) return;
-    const rec = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
-    const updated = SRS.review({ ...rec, firstStudied: todayStr() }, 3);
-    DB.setRecord(item.paper, item.si, item.ti, updated);
-    this.cardStates[idx] = { done: true, score: 3, open: false };
-    this.refresh(); this.rToday(); this.toast('Studied ✓');
-  },
-
-  rate(idx, score) {
-    const item = this.queue[idx]; if (!item) return;
-    const rec = DB.getRecord(item.paper, item.si, item.ti) || SRS.newRecord();
-    const updated = SRS.review(rec, score);
-    DB.setRecord(item.paper, item.si, item.ti, updated);
-    this.cardStates[idx] = { done: true, score, open: false };
-    this.refresh(); this.rToday();
-    const L = ['','Again — see you tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated'];
-    this.toast(L[score]);
+  toggleCard(idx) { Queue.toggleCard(idx); this.renderToday(); },
+  markStudied(idx) { Queue.markStudied(idx); this.updateHeader(); this.updateNavPcts(); this.renderToday(); this.toast('Studied ✓'); },
+  rateCard(idx, score) { Queue.rateCard(idx, score); this.updateHeader(); this.updateNavPcts(); this.renderToday(); const L=['','Again — tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated']; this.toast(L[score]); },
+  toggleMins(idx, key) { const cb=document.getElementById(`act-${idx}-${key}`); const mw=document.getElementById(`amins-${idx}-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
+  saveActivity(idx) {
+    const acts=[];
+    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`act-${idx}-${key}`); const mi=document.getElementById(`mins-${idx}-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
+    if (!acts.length) { this.toast('Nothing to save'); return; }
+    Queue.logActivity(idx, acts);
+    this.updateHeader(); this.renderToday();
+    this.toast(`${acts.reduce((s,a)=>s+a.mins,0)} mins logged ✓`);
   },
 
   // ── SYLLABUS ─────────────────────────────────────────────────────────────────
-  rSyllabus() {
-    const p = this.paper, info = SYLLABUS[p];
-    const cov = Analytics.paperCoverage(p), str = Analytics.paperStrength(p);
+  renderSyllabus() {
+    const paperId = this.currentPaper;
+    const paper = PAPERS[paperId];
+    const pStats = Analytics.paperStats(paperId);
+
     let h = `
-    <div style="margin-bottom:14px">
-      <div class="ph">${info.label} — <span style="font-weight:400;font-size:16px">${info.full}</span></div>
-      <div class="ps" style="margin-top:4px">Coverage ${cov}% · Avg strength ${str}%</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+      <div class="t-page">${paper.label}</div>
+      <div class="t-meta">${paper.full}</div>
     </div>
-    <div class="ptabs">
-      ${PAPER_ORDER.map(pp => `<button class="ptab ${pp===p?'active':''}" style="${pp===p?'background:'+SYLLABUS[pp].color+';border-color:'+SYLLABUS[pp].color+';color:#fff':''}" onclick="UI.goPaper('${pp}')">${SYLLABUS[pp].label}</button>`).join('')}
+    <div class="paper-tabs">
+      ${PAPER_ORDER.map(p => `<button class="ptab ${p===paperId?'active':''}" style="${p===paperId?'background:'+PAPERS[p].color+';border-color:'+PAPERS[p].color:''}" onclick="UI.goPaper('${p}')">${PAPERS[p].label}</button>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:14px"><span style="color:var(--cyan)">●</span> Cyan = your addition · Click row to open detail · Click header to expand</div>`;
-
-    info.subjects.forEach((subj, si) => {
-      const all = [...subj.topics, ...(subj.additions || [])];
-      const covered = all.filter((_, ti) => DB.getRecord(p, si, ti)?.firstStudied).length;
-      const pct = all.length ? Math.round(covered / all.length * 100) : 0;
-      const ch = DB.getCoaching(p, subj.name);
-      const cpct = ch.total > 0 ? Math.round(ch.completed / ch.total * 100) : 0;
-
-      h += `<div class="sblock">
-        <div class="shdr" onclick="UI.togSub('ss-${p}-${si}','sa-${p}-${si}')">
-          <span class="sname">${subj.name}</span>
-          <div class="smeta">
-            <div class="psm"><div class="psmf" style="width:${pct}%;background:${info.color}"></div></div>
-            <span class="spct" style="color:${info.color}">${covered}/${all.length}</span>
-            <span class="sarr" id="sa-${p}-${si}">▾</span>
-          </div>
-        </div>
-        <div id="ss-${p}-${si}" style="display:none">
-          <div class="lrow">
-            <span class="llbl">🎓 Coaching lectures</span>
-            <div class="linps">
-              <input class="linp linp-w" type="text" placeholder="Academy name" value="${ch.academy||''}"
-                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'academy')">
-              <input class="linp" type="number" min="0" placeholder="Total" value="${ch.total||''}"
-                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'total')">
-              <span class="lpct">/</span>
-              <input class="linp" type="number" min="0" placeholder="Done" value="${ch.completed||''}"
-                onchange="UI.saveCoach('${p}','${subj.name.replace(/'/g,"\\'")}',this,'completed')">
-              ${ch.total > 0 ? `<span class="lpct">${cpct}%</span>` : ''}
-            </div>
-          </div>
-          <table class="ttbl">
-            <thead><tr style="background:var(--bg3)">
-              <td style="padding:6px 16px;font-size:11px;color:var(--text3);font-weight:600">Topic</td>
-              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:90px">Status</td>
-              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:55px">PYQ</td>
-              <td style="padding:6px;font-size:11px;color:var(--text3);font-weight:600;width:80px">Strength</td>
-            </tr></thead>
-            <tbody>
-              ${subj.topics.map((t, ti) => this.tRow(p, si, ti, t, false, info.color)).join('')}
-              ${(subj.additions||[]).map((t, ai) => this.tRow(p, si, subj.topics.length + ai, t, true, info.color)).join('')}
-            </tbody>
-          </table>
-          <div class="addrow">
-            <div class="addform">
-              <input class="field" type="text" id="ai-${p}-${si}" placeholder="Add your own topic under this subject..."
-                onkeydown="if(event.key==='Enter')UI.addTopic('${p}',${si})">
-              <button class="btn btn-g btn-sm" onclick="UI.addTopic('${p}',${si})">+ Add</button>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    });
-
-    document.getElementById('c-syllabus').innerHTML = h;
-  },
-
-  tRow(p, si, ti, topic, isAdd, color) {
-    const rec = DB.getRecord(p, si, ti);
-    const str = SRS.strength(rec);
-    let badge, bc;
-    if (!rec?.firstStudied) { badge = 'Unseen'; bc = 'b-new'; }
-    else if (rec.nextReview && rec.nextReview < todayStr()) { badge = 'Due'; bc = 'b-due'; }
-    else if (rec.repetitions < 2) { badge = 'Studying'; bc = 'b-studying'; }
-    else if (rec.lastScore <= 2) { badge = 'Fragile'; bc = 'b-review'; }
-    else { badge = 'Strong'; bc = 'b-strong'; }
-    if (isAdd) bc = 'b-add';
-    const pv = rec?.pyqSeen || '';
-    return `<tr onclick="UI.openDr('${p}',${si},${ti})">
-      <td class="tname">${isAdd ? '<span style="color:var(--cyan);font-size:10px">+</span> ' : ''}${topic}</td>
-      <td><span class="tbadge ${bc}">${badge}</span></td>
-      <td>${pv ? `<span class="pyq-swatch" style="background:${pyqColor(pv)}"></span><span style="font-size:11px;color:var(--text2)">${pv}%</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-      <td><div class="smini"><div class="sminif" style="width:${str}%;background:${color}"></div></div></td>
-    </tr>`;
-  },
-
-  togSub(id, aid) {
-    const el = document.getElementById(id), ar = document.getElementById(aid);
-    if (!el) return;
-    const open = el.style.display !== 'none';
-    el.style.display = open ? 'none' : 'block';
-    if (ar) ar.textContent = open ? '▾' : '▴';
-  },
-
-  saveCoach(p, name, el, field) {
-    const c = DB.getCoaching(p, name);
-    c[field] = field === 'academy' ? el.value : parseInt(el.value) || 0;
-    DB.setCoaching(p, name, c);
-  },
-
-  addTopic(p, si) {
-    const inp = document.getElementById(`ai-${p}-${si}`);
-    const t = inp?.value?.trim(); if (!t) return;
-    Additions.add(p, si, t); inp.value = '';
-    this.rSyllabus(); this.toast('Topic added ✓');
-  },
-
-  // ── DRAWER ───────────────────────────────────────────────────────────────────
-  openDr(p, si, ti) {
-    const subj = SYLLABUS[p].subjects[si];
-    const all = [...subj.topics, ...(subj.additions || [])];
-    const topic = all[ti];
-    const isAdd = ti >= subj.topics.length;
-    const rec = DB.getRecord(p, si, ti) || SRS.newRecord();
-    const info = SYLLABUS[p];
-
-    document.getElementById('dcontent').innerHTML = `
-    <div class="dpaper" style="color:${info.color}">${info.label} · ${subj.name}${isAdd ? ' · <span style="color:var(--cyan)">Your addition</span>' : ''}</div>
-    <div class="dtopic">${topic}</div>
-    <div class="dsec">
-      <div class="dlbl">SRS history</div>
-      <div class="dhist">
-        ${rec.firstStudied ? `First studied: ${fmtDate(rec.firstStudied)}<br>` : '<span style="color:var(--text3)">Not yet studied</span><br>'}
-        ${rec.lastStudied ? `Last studied: ${fmtDate(rec.lastStudied)}<br>` : ''}
-        ${rec.nextReview ? `Next review: ${fmtDate(rec.nextReview)} (interval: ${rec.interval}d)<br>` : ''}
-        ${rec.repetitions ? `Repetitions: ${rec.repetitions}<br>` : ''}
-        ${rec.lastScore ? `Last recall: ${['','Again','Hard','Good','Easy'][rec.lastScore]}<br>` : ''}
-        ${rec.firstStudied ? `Strength: ${SRS.strength(rec)}%` : ''}
-      </div>
-    </div>
-    <div class="dsec">
-      <div class="dlbl">Sources</div>
-      <div class="srcblock">
-        <div class="srct">📖 NCERT</div>
-        <div class="srcrow"><label>Read</label>
-          <select class="field" id="d-ncert" onchange="UI.saveSrc('${p}',${si},${ti})">
-            <option value="" ${!rec.ncert?'selected':''}>— Not read</option>
-            <option value="yes" ${rec.ncert==='yes'?'selected':''}>Yes</option>
-          </select>
-        </div>
-        ${rec.ncert === 'yes' ? `<div class="srcrow"><label>Confidence</label>
-          <select class="field" id="d-ncertc" onchange="UI.saveSrc('${p}',${si},${ti})">
-            <option value="">— Select</option>
-            <option value="again" ${rec.ncertConf==='again'?'selected':''}>Again</option>
-            <option value="hard" ${rec.ncertConf==='hard'?'selected':''}>Hard</option>
-            <option value="good" ${rec.ncertConf==='good'?'selected':''}>Good</option>
-            <option value="easy" ${rec.ncertConf==='easy'?'selected':''}>Easy</option>
-          </select>
-        </div>` : ''}
-      </div>
-      <div class="srcblock">
-        <div class="srct">📚 Reference book</div>
-        <div class="srcrow"><label>Book name</label>
-          <input class="field" type="text" id="d-refb" placeholder="e.g. Spectrum, Bipin Chandra..."
-            value="${rec.refBook||''}" onchange="UI.saveSrc('${p}',${si},${ti})">
-        </div>
-        <div class="srcrow"><label>Section/Part</label>
-          <textarea class="field" id="d-refs" rows="2"
-            placeholder="Ch.4 temple architecture..."
-            onchange="UI.saveSrc('${p}',${si},${ti})">${rec.refSection||''}</textarea>
-        </div>
-      </div>
-      <div class="srcblock">
-        <div class="srct">📝 PYQ</div>
-        <div class="srcrow"><label>PYQ seen %</label>
-          <input type="number" id="d-pyqs" min="0" max="100" value="${rec.pyqSeen||''}" placeholder="0–100"
-            onchange="UI.saveSrc('${p}',${si},${ti})">
-          ${rec.pyqSeen ? `<span class="pyq-swatch" style="background:${pyqColor(rec.pyqSeen)}"></span>` : ''}
-        </div>
-        <div class="srcrow"><label>Evaluation</label>
-          <select class="field" id="d-pyqe" onchange="UI.saveSrc('${p}',${si},${ti})">
-            <option value="" ${!rec.pyqEval?'selected':''}>— Not attempted</option>
-            <option value="low" ${rec.pyqEval==='low'?'selected':''}>Self — Low</option>
-            <option value="avg" ${rec.pyqEval==='avg'?'selected':''}>Self — Average</option>
-            <option value="good" ${rec.pyqEval==='good'?'selected':''}>Self — Good</option>
-            <option value="excellent" ${rec.pyqEval==='excellent'?'selected':''}>Self — Excellent</option>
-          </select>
-        </div>
-        <div class="srcrow"><label>Third-party</label>
-          <select class="field" id="d-pyqt" onchange="UI.saveSrc('${p}',${si},${ti})">
-            <option value="no" ${rec.pyqThirdParty!=='yes'?'selected':''}>No</option>
-            <option value="yes" ${rec.pyqThirdParty==='yes'?'selected':''}>Yes</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="dsec">
-      <div class="dlbl">Notes</div>
-      <textarea class="field" id="d-notes" rows="4"
-        placeholder="Key points, doubts, connections...">${rec.notes||''}</textarea>
-      <button class="btn btn-p btn-sm" style="margin-top:8px" onclick="UI.saveNotes('${p}',${si},${ti})">Save notes</button>
-    </div>
-    <div class="dsec">
-      <div class="dlbl">AI features <span style="font-size:10px;color:var(--text3)">(set API key in Settings)</span></div>
-      <button class="aihook" disabled>Explain this topic for UPSC Mains<span class="aitag">AI_HOOK</span></button>
-      <button class="aihook" disabled>Generate 5 probable questions<span class="aitag">AI_HOOK</span></button>
-      <button class="aihook" disabled>Link to recent current affairs<span class="aitag">AI_HOOK</span></button>
+    <div class="t-meta" style="margin-bottom:12px">
+      ○ ◑ ● = first exposure / PYQ seen / PYQ attempted &nbsp;·&nbsp; Click chunk to open detail on right
     </div>`;
 
-    document.getElementById('doverlay').classList.add('open');
-  },
+    paper.subjects.forEach(subj => {
+      const sStats = Analytics.subjectStats(paperId, subj.id);
+      const coaching = DB.getCoaching(paperId, subj.id);
+      const cpct = coaching.total > 0 ? Math.round(coaching.completed/coaching.total*100) : 0;
+      const subKey = `s-${paperId}-${subj.id}`;
+      const isOpen = !!this.expanded[subKey];
+      const bullets = DB.getBullets(paperId, subj.id);
 
-  saveSrc(p, si, ti) {
-    const k = DB.key(p, si, ti);
-    if (!DB.data[k]) DB.data[k] = SRS.newRecord();
-    const r = DB.data[k];
-    const get = id => document.getElementById(id);
-    if (get('d-ncert')) r.ncert = get('d-ncert').value;
-    if (get('d-ncertc')) r.ncertConf = get('d-ncertc').value;
-    if (get('d-refb')) r.refBook = get('d-refb').value;
-    if (get('d-refs')) r.refSection = get('d-refs').value;
-    if (get('d-pyqs')) r.pyqSeen = get('d-pyqs').value;
-    if (get('d-pyqe')) r.pyqEval = get('d-pyqe').value;
-    if (get('d-pyqt')) r.pyqThirdParty = get('d-pyqt').value;
-    DB.save(); this.toast('Saved');
-    if (get('d-ncert')) this.openDr(p, si, ti);
-  },
-
-  saveNotes(p, si, ti) {
-    const k = DB.key(p, si, ti);
-    if (!DB.data[k]) DB.data[k] = SRS.newRecord();
-    DB.data[k].notes = document.getElementById('d-notes')?.value || '';
-    DB.save(); this.toast('Notes saved ✓');
-  },
-
-  closeDr(e) {
-    if (e && e.target !== document.getElementById('doverlay')) return;
-    document.getElementById('doverlay').classList.remove('open');
-    if (this.page === 'syllabus') this.rSyllabus();
-  },
-
-  // ── ONBOARDING ───────────────────────────────────────────────────────────────
-  rOnboard() {
-    let h = `
-    <div style="margin-bottom:20px"><div class="ph">Bulk onboarding</div>
-    <div class="ps" style="margin-top:4px">Initialise your existing preparation. Tick what you've studied, set confidence, then Apply.</div></div>
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="btn btn-p btn-sm" onclick="UI.obApply()">Apply all & seed SRS</button>
-      <button class="btn btn-g btn-sm" onclick="UI.obAll(true)">Check all</button>
-      <button class="btn btn-g btn-sm" onclick="UI.obAll(false)">Uncheck all</button>
-    </div>
-    <div class="ob-grid">`;
-
-    PAPER_ORDER.forEach(p => {
-      const info = SYLLABUS[p];
-      h += `<div class="ob-paper">
-        <div class="ob-phdr" style="color:${info.color}" onclick="UI.togOb('ob-${p}','oba-${p}')">
-          ${info.label} <span style="margin-left:auto;color:var(--text3)" id="oba-${p}">▾</span>
+      h += `<div class="subject-block">
+        <div class="subject-hdr" onclick="UI.toggleKey('${subKey}',true)">
+          <span class="subject-name">${subj.name}</span>
+          <div class="subject-meta">
+            ${sStats.total > 0 ? `<div class="btrack" style="width:56px"><div class="bfill" style="width:${sStats.cov}%;background:${paper.color}"></div></div>
+            <span class="subject-pct" style="color:${paper.color}">${sStats.cov}%</span>` : '<span class="t-meta">no chunks yet</span>'}
+            <span class="subject-arr">${isOpen?'▴':'▾'}</span>
+          </div>
         </div>
-        <div id="ob-${p}" style="display:none">`;
-      SYLLABUS[p].subjects.forEach((subj, si) => {
-        const all = [...subj.topics, ...(subj.additions || [])];
-        all.forEach((topic, ti) => {
-          const rec = DB.getRecord(p, si, ti);
-          const done = !!rec?.firstStudied;
-          const conf = rec?.lastScore ? ['','again','hard','good','easy'][rec.lastScore] : 'good';
-          h += `<div class="ob-trow" onclick="UI.togChk('oc-${p}-${si}-${ti}')">
-            <div class="ob-chk ${done?'checked':''}" id="oc-${p}-${si}-${ti}">${done?'✓':''}</div>
-            <div class="ob-name">${topic.length > 50 ? topic.substring(0,50)+'…' : topic}</div>
-            <select class="ob-sel" onclick="event.stopPropagation()" id="ov-${p}-${si}-${ti}">
-              <option value="again" ${conf==='again'?'selected':''}>Again</option>
-              <option value="hard" ${conf==='hard'?'selected':''}>Hard</option>
-              <option value="good" ${conf==='good'?'selected':''}>Good</option>
-              <option value="easy" ${conf==='easy'?'selected':''}>Easy</option>
-            </select>
+
+        ${isOpen ? `
+        <!-- Coaching row -->
+        <div class="coaching-row">
+          <span class="coaching-label">🎓 Coaching</span>
+          <div class="coaching-inputs">
+            <input class="cinp cinp-wide" type="text" placeholder="Academy name" value="${coaching.academy||''}"
+              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'academy')">
+            <input class="cinp cinp-num" type="number" min="0" placeholder="Total" value="${coaching.total||''}"
+              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'total')">
+            <span class="t-meta">/</span>
+            <input class="cinp cinp-num" type="number" min="0" placeholder="Done" value="${coaching.completed||''}"
+              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'completed')">
+            ${coaching.total > 0 ? `<span class="coaching-pct">${cpct}%</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Bullets -->
+        ${bullets.map(bullet => {
+          const bulKey = `b-${bullet.id}`;
+          const isBulOpen = !!this.expanded[bulKey];
+          const covCount = bullet.chunks.filter(c => DB.getRecord(c.id)?.firstStudied).length;
+
+          return `<div class="bullet-block">
+            <div class="bullet-hdr" onclick="UI.toggleKey('${bulKey}',false)">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px"
+                  contenteditable="true" spellcheck="false"
+                  onblur="UI.saveBulletLabel('${paperId}','${subj.id}','${bullet.id}',this.textContent.trim())"
+                  onclick="event.stopPropagation()"
+                  title="Click to edit label">${bullet.label}</div>
+                <div class="bullet-official">${bullet.official}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                ${bullet.chunks.length > 0 ? `<span class="t-meta">${covCount}/${bullet.chunks.length}</span>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteBullet('${paperId}','${subj.id}','${bullet.id}')" style="padding:2px 6px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
+                <span class="bullet-arr">${isBulOpen?'▴':'▾'}</span>
+              </div>
+            </div>
+
+            ${isBulOpen ? `
+            ${bullet.chunks.map(chunk => {
+              const rec = DB.getRecord(chunk.id) || {};
+              const str = SRS.strength(rec);
+              const isSel = this.selectedChunkId === chunk.id;
+              let sc = 'unseen';
+              if (rec.firstStudied) {
+                if (rec.nextReview && rec.nextReview < todayStr()) sc = 'due';
+                else if ((rec.repetitions||0) < 2) sc = 'studying';
+                else if ((rec.lastScore||0) <= 2) sc = 'fragile';
+                else sc = 'strong';
+              }
+              return `<div class="chunk-row ${isSel?'selected':''}" onclick="UI.selectChunk('${chunk.id}')">
+                <div class="chunk-status ${sc}"></div>
+                <div class="chunk-name">${chunk.name}</div>
+                <div class="gap-dots">
+                  <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
+                  <div class="gdot ${SRS.gapClass(rec.gap2Remaining)}" title="PYQ seen"></div>
+                  <div class="gdot ${SRS.gapClass(rec.gap3Remaining)}" title="PYQ attempted"></div>
+                </div>
+                ${SRS.totalAllMins(rec)>0?`<span class="chunk-time">${fmtMins(SRS.totalAllMins(rec))}</span>`:''}
+                <div class="str-mini"><div class="str-fill" style="width:${str}%;background:${paper.color}"></div></div>
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteChunk('${paperId}','${subj.id}','${bullet.id}','${chunk.id}')" style="padding:2px 5px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
+              </div>`;
+            }).join('')}
+
+            <!-- Add chunk -->
+            <div class="add-chunk-row">
+              <div class="add-chunk-form">
+                <input class="field" type="text" id="ci-${bullet.id}" placeholder="Add chunk — e.g. Industrial Revolution" style="font-size:12px;padding:5px 8px"
+                  onkeydown="if(event.key==='Enter'){UI.addChunk('${paperId}','${subj.id}','${bullet.id}');event.preventDefault()}">
+                <button class="btn btn-ghost btn-sm" onclick="UI.addChunk('${paperId}','${subj.id}','${bullet.id}')">+ Add</button>
+              </div>
+            </div>` : ''}
           </div>`;
-        });
-      });
-      h += `</div></div>`;
+        }).join('')}
+
+        <!-- Add bullet -->
+        <div style="padding:8px 14px;border-top:1px solid var(--border)">
+          <div style="display:flex;gap:6px">
+            <input class="field" type="text" id="bi-${paperId}-${subj.id}" placeholder="Paste UPSC official bullet point here..." style="font-size:12px;padding:5px 8px"
+              onkeydown="if(event.key==='Enter'){UI.addBullet('${paperId}','${subj.id}');event.preventDefault()}">
+            <button class="btn btn-ghost btn-sm" onclick="UI.addBullet('${paperId}','${subj.id}')">+ Bullet</button>
+          </div>
+        </div>` : ''}
+      </div>`;
     });
 
-    h += `</div><div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
-      <strong style="color:var(--text)">How it works:</strong> Check topics you have already studied. Set confidence honestly. Click Apply — SRS seeds each checked topic with the right starting interval. Unchecked topics remain new.
-    </div>`;
-
-    document.getElementById('c-onboard').innerHTML = h;
+    document.getElementById('syllabus-left').innerHTML = h;
   },
 
-  togOb(id, aid) {
-    const el = document.getElementById(id), ar = document.getElementById(aid);
+  toggleKey(key, isSubject) {
+    this.expanded[key] = !this.expanded[key];
+    if (isSubject) this.renderSyllabus();
+    else this.renderSyllabus();
+  },
+
+  saveBulletLabel(paperId, subjId, bulletId, label) {
+    if (label) DB.updateBulletLabel(paperId, subjId, bulletId, label);
+  },
+
+  saveCoaching(paperId, subjId, el, field) {
+    const c = DB.getCoaching(paperId, subjId);
+    c[field] = field === 'academy' ? el.value : parseInt(el.value) || 0;
+    DB.setCoaching(paperId, subjId, c);
+  },
+
+  addBullet(paperId, subjId) {
+    const inp = document.getElementById(`bi-${paperId}-${subjId}`);
+    const text = inp?.value?.trim();
+    if (!text) { this.toast('Enter the official bullet text'); return; }
+    DB.addBullet(paperId, subjId, text);
+    inp.value = '';
+    this.renderSyllabus();
+    this.toast('Bullet added ✓');
+  },
+
+  deleteBullet(paperId, subjId, bulletId) {
+    if (!confirm('Delete this bullet and all its chunks?')) return;
+    DB.deleteBullet(paperId, subjId, bulletId);
+    this.renderSyllabus();
+    this.toast('Deleted');
+  },
+
+  addChunk(paperId, subjId, bulletId) {
+    const inp = document.getElementById(`ci-${bulletId}`);
+    const name = inp?.value?.trim();
+    if (!name) { this.toast('Enter chunk name'); return; }
+    const chunk = DB.addChunk(paperId, subjId, bulletId, name);
+    inp.value = '';
+    this.renderSyllabus();
+    this.toast('Chunk added ✓');
+  },
+
+  deleteChunk(paperId, subjId, bulletId, chunkId) {
+    if (!confirm('Delete this chunk and all its progress?')) return;
+    DB.deleteChunk(paperId, subjId, bulletId, chunkId);
+    if (this.selectedChunkId === chunkId) { this.selectedChunkId = null; this.renderChunkDetail(null); }
+    this.updateHeader(); this.updateNavPcts(); this.renderSyllabus();
+    this.toast('Deleted');
+  },
+
+  selectChunk(chunkId) {
+    this.selectedChunkId = chunkId;
+    this.renderChunkDetail(chunkId);
+    this.renderSyllabus();
+  },
+
+  openDetail(chunkId) {
+    this.selectedChunkId = chunkId;
+    if (this.currentPage !== 'syllabus') {
+      this.goPaper(this.currentPaper);
+      setTimeout(() => { this.renderChunkDetail(chunkId); }, 50);
+    } else {
+      this.renderChunkDetail(chunkId);
+    }
+  },
+
+  // ── CHUNK DETAIL ─────────────────────────────────────────────────────────────
+  renderChunkDetail(chunkId) {
+    const el = document.getElementById('chunk-detail');
     if (!el) return;
-    const open = el.style.display !== 'none';
-    el.style.display = open ? 'none' : 'block';
-    if (ar) ar.textContent = open ? '▾' : '▴';
-  },
 
-  togChk(id) {
-    const el = document.getElementById(id); if (!el) return;
-    const c = el.classList.toggle('checked'); el.textContent = c ? '✓' : '';
-  },
-
-  obAll(check) {
-    document.querySelectorAll('.ob-chk').forEach(el => {
-      el.classList.toggle('checked', check); el.textContent = check ? '✓' : '';
-    });
-  },
-
-  obApply() {
-    let count = 0;
-    PAPER_ORDER.forEach(p => {
-      SYLLABUS[p].subjects.forEach((subj, si) => {
-        const all = [...subj.topics, ...(subj.additions || [])];
-        all.forEach((_, ti) => {
-          const chk = document.getElementById(`oc-${p}-${si}-${ti}`);
-          const conf = document.getElementById(`ov-${p}-${si}-${ti}`);
-          if (chk?.classList.contains('checked') && conf) {
-            const rec = DB.getRecord(p, si, ti) || SRS.newRecord();
-            if (!rec.firstStudied) { DB.setRecord(p, si, ti, SRS.seedFromConf(conf.value)); count++; }
-          }
-        });
-      });
-    });
-    this.refresh();
-    this.queue = Queue.build(DB.settings.dailyTarget || 6);
-    this.initStates();
-    this.toast(`${count} topics seeded ✓`);
-    this.go('today');
-  },
-
-  // ── GAP ANALYSIS ─────────────────────────────────────────────────────────────
-  rGaps() {
-    const stats = Queue.stats();
-    let h = `
-    <div style="margin-bottom:20px"><div class="ph">Gap analysis</div>
-    <div class="ps" style="margin-top:4px">Where you are vs where you need to be.</div></div>
-    <div class="metrics">
-      <div class="met"><div class="ml">Total topics</div><div class="mv">${stats.total}</div><div class="ms">across all papers</div></div>
-      <div class="met"><div class="ml">Studied</div><div class="mv" style="color:var(--accent)">${stats.studied}</div><div class="ms">${Math.round(stats.studied/Math.max(stats.total,1)*100)}% first pass</div></div>
-      <div class="met"><div class="ml">Strong</div><div class="mv" style="color:var(--green)">${stats.strong}</div><div class="ms">retention > 70%</div></div>
-      <div class="met"><div class="ml">Unseen</div><div class="mv" style="color:var(--red)">${stats.unseen}</div><div class="ms">never studied</div></div>
-    </div>
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:600">Gap score by paper</div>
-      <div style="font-size:13px;color:var(--text3)">Lower is better · 0 = no gaps · 100 = all unseen</div>
-    </div>
-    <div class="gap-grid">`;
-
-    PAPER_ORDER.forEach(p => {
-      const gap = Analytics.gapScore(p);
-      const cov = Analytics.paperCoverage(p);
-      const str = Analytics.paperStrength(p);
-      const info = SYLLABUS[p];
-      const gc = gap > 70 ? 'var(--red)' : gap > 40 ? 'var(--amber)' : 'var(--green)';
-      h += `<div class="gcard">
-        <div class="gpaper" style="color:${info.color}">${info.label}</div>
-        <div class="gnum" style="color:${gc}">${gap}<span style="font-size:13px;color:var(--text3)"> / 100</span></div>
-        <div class="grow"><span class="glbl">Coverage</span><div class="gtrk"><div class="gfil" style="width:${cov}%;background:${info.color}"></div></div><span class="gpct">${cov}%</span></div>
-        <div class="grow"><span class="glbl">Strength</span><div class="gtrk"><div class="gfil" style="width:${str}%;background:var(--green)"></div></div><span class="gpct">${str}%</span></div>
-        <div class="grow"><span class="glbl">Gap</span><div class="gtrk"><div class="gfil" style="width:${gap}%;background:${gc}"></div></div><span class="gpct">${gap}%</span></div>
-        <button class="btn btn-g btn-sm" style="margin-top:10px;width:100%" onclick="UI.goPaper('${p}')">View ${info.label} →</button>
+    if (!chunkId) {
+      el.innerHTML = `<div class="right-pane-empty">
+        <div class="icon">◎</div>
+        <div class="t-section">No chunk selected</div>
+        <div class="t-meta" style="margin-top:6px">Click any chunk in the syllabus to see its detail here</div>
       </div>`;
-    });
+      return;
+    }
 
-    h += `</div><div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
-      <strong style="color:var(--text)">Gap score formula:</strong> Unseen = 1.0 · Again = 0.8 · Hard = 0.5 · Good = 0.2 · Easy = 0. Score below 30 = well covered.
+    // Find chunk
+    let foundChunk=null, foundBullet=null, foundPaper=null, foundPaperId=null;
+    for (const paperId of PAPER_ORDER) {
+      for (const subj of PAPERS[paperId].subjects) {
+        for (const bullet of DB.getBullets(paperId, subj.id)) {
+          const c = bullet.chunks.find(c => c.id === chunkId);
+          if (c) { foundChunk=c; foundBullet=bullet; foundPaper=PAPERS[paperId]; foundPaperId=paperId; break; }
+        }
+        if (foundChunk) break;
+      }
+      if (foundChunk) break;
+    }
+    if (!foundChunk) { el.innerHTML='<div class="t-meta" style="padding:20px">Chunk not found</div>'; return; }
+
+    const rec = DB.getRecord(chunkId) || SRS.newRecord();
+    const totalM = SRS.totalMins(rec);
+    const allMins = SRS.totalAllMins(rec);
+    const g2c = SRS.gapClass(rec.gap2Remaining);
+    const g3c = SRS.gapClass(rec.gap3Remaining);
+    const recent = (rec.activityLog||[]).slice(-6).reverse();
+    const ML = {lecture:'Lecture',ncert:'NCERT','pyq-seen':'PYQ seen','pyq-attempted':'PYQ attempted',reference:'Reference/Internet'};
+
+    el.innerHTML = `
+    <div class="chunk-detail-paper" style="color:${foundPaper.color}">${foundPaper.label}</div>
+    <div class="chunk-detail-name">${foundChunk.name}</div>
+    <div class="chunk-detail-official">${foundBullet.official}</div>
+
+    <!-- Three gaps -->
+    <div class="detail-section">
+      <div class="detail-label">Learning pipeline</div>
+      <div class="gaps-row">
+        <div class="gap-item ${rec.gap1Done?'done':''}" onclick="UI.toggleGap1('${chunkId}')">
+          <div class="gap-circle">${rec.gap1Done?'✓':''}</div>
+          <div class="gap-title">First exposure</div>
+          <div class="t-meta" style="margin-top:3px">${rec.gap1Done?'Done':'Not yet'}</div>
+        </div>
+        <div class="gap-item ${g2c}">
+          <div class="gap-circle">${rec.gap2Remaining==='done'?'✓':rec.gap2Remaining==='little'?'◑':''}</div>
+          <div class="gap-title">PYQ seen</div>
+          <select class="pyq-remaining-select" style="margin-top:5px" onchange="UI.setGap2('${chunkId}',this.value)">
+            <option value="all" ${(!rec.gap2Remaining||rec.gap2Remaining==='all')?'selected':''}>All left</option>
+            <option value="most" ${rec.gap2Remaining==='most'?'selected':''}>Most left</option>
+            <option value="some" ${rec.gap2Remaining==='some'?'selected':''}>Some left</option>
+            <option value="little" ${rec.gap2Remaining==='little'?'selected':''}>A little left</option>
+            <option value="done" ${rec.gap2Remaining==='done'?'selected':''}>Done ✓</option>
+          </select>
+        </div>
+        <div class="gap-item ${g3c}">
+          <div class="gap-circle">${rec.gap3Remaining==='done'?'✓':rec.gap3Remaining==='little'?'◑':''}</div>
+          <div class="gap-title">PYQ attempted</div>
+          <select class="pyq-remaining-select" style="margin-top:5px" onchange="UI.setGap3('${chunkId}',this.value)">
+            <option value="all" ${(!rec.gap3Remaining||rec.gap3Remaining==='all')?'selected':''}>All left</option>
+            <option value="most" ${rec.gap3Remaining==='most'?'selected':''}>Most left</option>
+            <option value="some" ${rec.gap3Remaining==='some'?'selected':''}>Some left</option>
+            <option value="little" ${rec.gap3Remaining==='little'?'selected':''}>A little left</option>
+            <option value="done" ${rec.gap3Remaining==='done'?'selected':''}>Done ✓</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time invested -->
+    <div class="detail-section">
+      <div class="detail-label">Time invested — ${allMins > 0 ? fmtMins(allMins) + ' total' : 'nothing logged yet'}</div>
+      ${allMins > 0 ? `<div class="time-summary">
+        ${Object.entries(ML).map(([key,label])=>{ const m=totalM[key]||0; return m>0?`<div class="time-row"><span class="time-medium">${label}</span><span class="time-val">${fmtMins(m)}</span></div>`:''; }).join('')}
+      </div>` : `<div class="t-meta">Log activity from Today's queue or use the form below.</div>`}
+    </div>
+
+    <!-- Quick log from detail -->
+    <div class="detail-section">
+      <div class="detail-label">Log activity now</div>
+      <div class="activity-rows">
+        ${Object.entries(ML).map(([key,label])=>`
+        <div class="activity-row">
+          <label class="activity-check">
+            <input type="checkbox" id="dact-${key}" onchange="UI.toggleDetailMins('${key}')">
+            <span class="alabel">${label}</span>
+          </label>
+          <div class="activity-mins" id="damins-${key}" style="display:none">
+            <input class="mins-input" type="number" id="dmins-${key}" min="1" max="300" placeholder="0">
+            <span class="mins-label">min</span>
+          </div>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="UI.saveDetailActivity('${chunkId}')">Save activity</button>
+    </div>
+
+    <!-- Recent activity -->
+    ${recent.length > 0 ? `<div class="detail-section">
+      <div class="detail-label">Recent activity</div>
+      <div class="activity-hist">
+        ${recent.map(e=>`<div class="hist-entry"><span class="hist-date">${e.date}</span><span class="hist-medium">${ML[e.medium]||e.medium}</span><span class="hist-mins">${fmtMins(e.mins)}</span></div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- SRS -->
+    <div class="detail-section">
+      <div class="detail-label">SRS history</div>
+      <div class="srs-hist">
+        ${rec.firstStudied?`First studied: ${fmtDate(rec.firstStudied)}<br>`:'<span style="color:var(--text3)">Not yet studied</span>'}
+        ${rec.lastStudied?`Last studied: ${fmtDate(rec.lastStudied)}<br>`:''}
+        ${rec.nextReview?`Next review: ${fmtDate(rec.nextReview)} (${rec.interval}d interval)<br>`:''}
+        ${rec.repetitions?`Repetitions: ${rec.repetitions}<br>`:''}
+        ${rec.lastScore?`Last recall: ${['','Again','Hard','Good','Easy'][rec.lastScore]}<br>`:''}
+        ${rec.firstStudied?`Strength: ${SRS.strength(rec)}%`:''}
+      </div>
+    </div>
+
+    <!-- Curious question -->
+    <div class="detail-section">
+      <div class="detail-label">Your curious question</div>
+      <textarea class="field" id="cq-inp" rows="2" placeholder="Why does this matter? What if...? How does this connect to...?"
+        onblur="UI.saveCQ('${chunkId}')">${rec.curiousQ||''}</textarea>
+      ${rec.curiousQ?`<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;cursor:pointer">
+        <input type="checkbox" ${rec.curiousAnswered?'checked':''} onchange="UI.saveCQAnswered('${chunkId}',this.checked)" style="accent-color:var(--accent)">
+        <span style="color:var(--text2)">Answered</span>
+      </label>`:''}
+    </div>
+
+    <!-- Notes -->
+    <div class="detail-section">
+      <div class="detail-label">Notes</div>
+      <textarea class="field" id="notes-inp" rows="4" placeholder="Key points, connections, sources, things to remember..."
+        onblur="UI.saveNotes('${chunkId}')">${rec.notes||''}</textarea>
+    </div>
+
+    <!-- AI hooks -->
+    <div class="detail-section">
+      <div class="detail-label">AI features <span class="t-meta">(coming soon)</span></div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        ${['Explain this chunk for UPSC Mains','Generate 5 probable questions','Link to recent current affairs'].map(label=>`
+        <button style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);font-size:12px;color:var(--text3);width:100%;cursor:not-allowed" disabled>
+          ${label} <span style="margin-left:auto;font-size:10px;background:var(--bg4);padding:2px 5px;border-radius:4px">AI</span>
+        </button>`).join('')}
+      </div>
     </div>`;
-
-    document.getElementById('c-gaps').innerHTML = h;
   },
 
-  // ── BATTLE PLAN ──────────────────────────────────────────────────────────────
-  rPlan() {
-    const y = this.year;
-    const phases = PHASES[y];
-    const cur = Plan.current(y);
-    const pace = Plan.pace(y);
+  toggleGap1(chunkId) {
+    const rec = DB.getRecord(chunkId) || SRS.newRecord();
+    rec.gap1Done = !rec.gap1Done;
+    DB.setRecord(chunkId, rec);
+    this.renderChunkDetail(chunkId);
+    if (this.currentPage === 'syllabus') this.renderSyllabus();
+    this.toast(rec.gap1Done ? 'Gap 1 closed ✓' : 'Gap 1 reopened');
+  },
+  setGap2(chunkId, val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap2Remaining=val; DB.setRecord(chunkId,rec); if(this.currentPage==='syllabus') this.renderSyllabus(); },
+  setGap3(chunkId, val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.gap3Remaining=val; DB.setRecord(chunkId,rec); if(this.currentPage==='syllabus') this.renderSyllabus(); },
+
+  toggleDetailMins(key) { const cb=document.getElementById(`dact-${key}`); const mw=document.getElementById(`damins-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
+  saveDetailActivity(chunkId) {
+    const acts=[];
+    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`dact-${key}`); const mi=document.getElementById(`dmins-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
+    if (!acts.length) { this.toast('Nothing to save'); return; }
+    const rec = DB.getRecord(chunkId)||SRS.newRecord();
+    DB.setRecord(chunkId, SRS.logActivity(rec, acts));
+    this.renderChunkDetail(chunkId);
+    if (this.currentPage==='syllabus') this.renderSyllabus();
+    this.updateHeader(); this.updateNavPcts();
+    this.toast(`${acts.reduce((s,a)=>s+a.mins,0)} mins logged ✓`);
+  },
+  saveCQ(chunkId) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); const val=document.getElementById('cq-inp')?.value||''; if(val!==rec.curiousQ){rec.curiousQ=val;DB.setRecord(chunkId,rec);this.toast('Question saved ✓');} },
+  saveCQAnswered(chunkId,val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.curiousAnswered=val; DB.setRecord(chunkId,rec); },
+  saveNotes(chunkId) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); const val=document.getElementById('notes-inp')?.value||''; if(val!==rec.notes){rec.notes=val;DB.setRecord(chunkId,rec);this.toast('Notes saved ✓');} },
+
+  // ── PACE ─────────────────────────────────────────────────────────────────────
+  renderPace() {
+    const year = this.currentYear;
+    const pace = Plan.pace(year);
+    const stats = Analytics.globalStats();
     const wd = Plan.weekDone();
-    const today = todayStr();
+    const phase = Plan.currentPhase(year);
 
-    let h = `
-    <div class="plan-hdr">
-      <div><div class="ph">Battle plan</div><div class="ps" style="margin-top:2px">Neuroscience-sequenced roadmap to Prelims</div></div>
-      <div class="ytog">
-        <button class="ybtn ${y===2027?'active':''}" onclick="UI.setYear(2027)">CSE 2027</button>
-        <button class="ybtn ${y===2028?'active':''}" onclick="UI.setYear(2028)">CSE 2028</button>
-      </div>
-    </div>
-    <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
-      <div class="met"><div class="ml">Days to Prelims</div><div class="mv" style="color:var(--accent)">${pace.daysLeft}</div><div class="ms">Prelims ${y}</div></div>
-      <div class="met"><div class="ml">Pace</div><div class="mv" style="font-size:18px;color:var(--${pace.status==='on-track'?'green':pace.status==='watch'?'amber':'red'})">${pace.status.replace('-',' ')}</div><div class="ms">${pace.msg}</div></div>
-      <div class="met"><div class="ml">This week</div><div class="mv">${wd}<span style="font-size:13px;color:var(--text3)"> / ${cur?.weekly||6}</span></div><div class="ms">${Math.round(wd/Math.max(cur?.weekly||6,1)*100)}% of target</div></div>
-    </div>
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:600">Phase timeline</div>
-      <div style="font-size:13px;color:var(--text3)">Where you are & what comes next</div>
-    </div>`;
+    let tableH = `<table class="pace-table">
+      <thead><tr>
+        <th>Paper</th><th>Coverage</th><th>Chunks</th>
+        <th title="First exposure done">Gap 1</th>
+        <th title="PYQ seen done">Gap 2</th>
+        <th title="PYQ attempted done">Gap 3</th>
+        <th>Time</th>
+      </tr></thead><tbody>`;
 
-    phases.forEach((phase, idx) => {
-      const isPast = today > phase.end, isCur = today >= phase.start && today <= phase.end;
-      const isLast = idx === phases.length - 1;
-      const cls = isPast ? 'past' : isCur ? 'current' : '';
-      h += `<div class="pblock">
-        <div class="pline-w">
-          <div class="pcircle ${cls}"><div class="phdot"></div></div>
-          ${!isLast ? `<div class="pconn ${isPast?'past':''}"></div>` : ''}
-        </div>
-        <div class="pcont ${cls}">
-          <div class="ptag">${phase.tag}${isCur?' · You are here':''}</div>
-          <div class="pname">${phase.name}</div>
-          <div class="pdates">${fmtDate(phase.start)} → ${fmtDate(phase.end)} · ${phase.weekly} topics/week · ${phase.daily}h/day</div>
-          <div class="pgoal">${phase.goal}</div>
-          <div class="pneuro">⚡ ${phase.neuro}</div>
-        </div>
-      </div>`;
+    PAPER_ORDER.forEach(paperId => {
+      const paper = PAPERS[paperId];
+      const ps = Analytics.paperStats(paperId);
+      const isExp = !!this.expanded[`pace-${paperId}`];
+      tableH += `<tr onclick="UI.togglePacePaper('${paperId}')" class="${isExp?'expanded':''}">
+        <td class="paper-name-cell"><div class="nav-dot" style="background:${paper.color}"></div>${paper.label}<span style="font-size:10px;color:var(--text3);margin-left:4px">${isExp?'▴':'▾'}</span></td>
+        <td><div style="display:flex;align-items:center;gap:6px"><div class="btrack" style="width:44px"><div class="bfill" style="width:${ps.cov}%;background:${paper.color}"></div></div>${ps.cov}%</div></td>
+        <td>${ps.studied}/${ps.total}</td>
+        <td style="color:${ps.gap1>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap1}/${ps.total}</td>
+        <td style="color:${ps.gap2>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap2}/${ps.total}</td>
+        <td style="color:${ps.gap3>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap3}/${ps.total}</td>
+        <td>${fmtMins(ps.totalMins)}</td>
+      </tr>`;
+      if (isExp) {
+        PAPERS[paperId].subjects.forEach(subj => {
+          const ss = Analytics.subjectStats(paperId, subj.id);
+          tableH += `<tr class="subj-expand-row"><td colspan="7"><div class="subj-row-inner">
+            <span class="subj-name-s">↳ ${subj.name}</span>
+            <span>${ss.cov}% covered</span>
+            <span>G1:${ss.gap1}/${ss.total}</span>
+            <span>G2:${ss.gap2}/${ss.total}</span>
+            <span>G3:${ss.gap3}/${ss.total}</span>
+            <span>${fmtMins(ss.totalMins)}</span>
+          </div></td></tr>`;
+        });
+      }
     });
+    tableH += '</tbody></table>';
 
-    h += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">
-      <strong style="color:var(--text)">Foundation:</strong> Encoding phase. New pathways form. Breadth first.<br>
-      <strong style="color:var(--text)">Deepening:</strong> Consolidation. Myelin thickens on pathways you revisit repeatedly.<br>
-      <strong style="color:var(--text)">Integration:</strong> Interleaving across subjects builds flexible retrieval — 30–40% better than blocked practice.<br>
-      <strong style="color:var(--text)">Sprint:</strong> Retrieval practice. Testing yourself is 2× more effective than re-reading.
-    </div>`;
-
-    document.getElementById('c-plan').innerHTML = h;
-  },
-
-  setYear(y) {
-    this.year = y; DB.settings.targetYear = y; DB.save();
-    this.refresh(); this.rPlan();
-  },
-
-  // ── STATS ────────────────────────────────────────────────────────────────────
-  rStats() {
-    const act = Analytics.activity90();
-    const stats = Queue.stats();
-    const streak = DB.settings.streak || 0;
-    const cells = act.map(d => {
-      const l = d.count === 0 ? 0 : d.count < 3 ? 1 : d.count < 6 ? 2 : 3;
-      return `<div class="ahc l${l}" title="${d.date}: ${d.count}"></div>`;
-    }).join('');
-
-    let h = `
-    <div style="margin-bottom:20px"><div class="ph">Stats</div><div class="ps" style="margin-top:4px">Your preparation fingerprint</div></div>
-    <div class="metrics">
-      <div class="met"><div class="ml">Streak</div><div class="mv" style="color:var(--amber)">🔥${streak}</div><div class="ms">consecutive days</div></div>
-      <div class="met"><div class="ml">Studied</div><div class="mv" style="color:var(--accent)">${stats.studied}</div><div class="ms">of ${stats.total} topics</div></div>
-      <div class="met"><div class="ml">Strong</div><div class="mv" style="color:var(--green)">${stats.strong}</div><div class="ms">retention > 70%</div></div>
-      <div class="met"><div class="ml">Due today</div><div class="mv" style="color:var(--red)">${stats.due}</div><div class="ms">for review</div></div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Activity — last 90 days</div>
-      <div class="ah-grid">${cells}</div>
-      <div style="display:flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--text3)">
-        Less <div class="ahc" style="width:11px;height:11px;display:inline-block"></div>
-        <div class="ahc l1" style="width:11px;height:11px;display:inline-block"></div>
-        <div class="ahc l2" style="width:11px;height:11px;display:inline-block"></div>
-        <div class="ahc l3" style="width:11px;height:11px;display:inline-block"></div> More
+    document.getElementById('c-pace').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="t-page">Pace</div>
+      <div class="year-toggle">
+        <button class="ytbtn ${year===2027?'active':''}" onclick="UI.setYear(2027)">CSE 2027</button>
+        <button class="ytbtn ${year===2028?'active':''}" onclick="UI.setYear(2028)">CSE 2028</button>
       </div>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Coverage & strength by paper</div>
-      ${PAPER_ORDER.map(p => {
-        const cov = Analytics.paperCoverage(p), str = Analytics.paperStrength(p), info = SYLLABUS[p];
-        return `<div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
-            <span style="font-weight:500">${info.label}</span>
-            <span style="color:var(--text3)">${cov}% covered · ${str}% strength</span>
-          </div>
-          <div style="display:flex;gap:4px">
-            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${cov}%;background:${info.color};border-radius:999px"></div></div>
-            <div style="flex:1;height:6px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${str}%;background:var(--green);border-radius:999px"></div></div>
-          </div>
-          <div style="display:flex;gap:4px;margin-top:3px;font-size:10px;color:var(--text3)"><span style="flex:1">Coverage</span><span style="flex:1">Retention</span></div>
-        </div>`;
-      }).join('')}
-    </div>`;
 
-    document.getElementById('c-stats').innerHTML = h;
+    <div class="pace-numbers">
+      <div class="pnum"><div class="pnum-label">Days to Prelims</div><div class="pnum-val" style="color:var(--accent)">${pace.days}</div><div class="pnum-sub">Prelims ${year}</div></div>
+      <div class="pnum"><div class="pnum-label">Status</div><div class="pnum-val" style="font-size:16px;color:var(--${pace.status==='on-track'?'c-green':pace.status==='watch'?'c-amber':'c-red'})">${pace.status.replace('-',' ')}</div><div class="pnum-sub">${pace.msg}</div></div>
+      <div class="pnum"><div class="pnum-label">Daily target</div><div class="pnum-val">${pace.target}</div><div class="pnum-sub">chunks/day · ${pace.unseen} unseen</div></div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div class="detail-label" style="margin-bottom:8px">Pipeline health</div>
+      <div class="pipeline-row">
+        <div class="pipe-item"><div class="pipe-val" style="color:var(--c-green)">${Math.min(stats.gap1,stats.gap2,stats.gap3)}</div><div class="pipe-label">All gaps closed</div></div>
+        <div class="pipe-item"><div class="pipe-val" style="color:var(--c-amber)">${Math.max(0,stats.gap1-stats.gap2)}</div><div class="pipe-label">Exposure only</div></div>
+        <div class="pipe-item"><div class="pipe-val" style="color:var(--c-red)">${stats.unseen}</div><div class="pipe-label">Untouched</div></div>
+        <div class="pipe-item"><div class="pipe-val" style="color:var(--text2)">${fmtMins(stats.totalMins)}</div><div class="pipe-label">Total invested</div></div>
+      </div>
+    </div>
+
+    <div class="detail-label" style="margin-bottom:8px">Paper breakdown — click to expand subjects</div>
+    ${tableH}`;
   },
+
+  togglePacePaper(paperId) { this.expanded[`pace-${paperId}`]=!this.expanded[`pace-${paperId}`]; this.renderPace(); },
+  setYear(year) { this.currentYear=year; DB.settings.targetYear=year; DB.save(); this.updateHeader(); if(this.currentPage==='pace') this.renderPace(); },
 
   // ── SETTINGS ─────────────────────────────────────────────────────────────────
-  rSettings() {
+  renderSettings() {
     const t = DB.settings.dailyTarget || 6;
+    const th = DB.settings.theme || 'dark';
+    const pa = DB.settings.palette || 'cool';
     document.getElementById('c-settings').innerHTML = `
-    <div style="margin-bottom:20px"><div class="ph">Settings</div></div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Study preferences</div>
-      <div style="margin-bottom:16px">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Daily target: <strong id="td">${t}</strong> topics</div>
-        <input type="range" min="3" max="15" step="1" value="${t}" style="width:100%"
-          oninput="document.getElementById('td').textContent=this.value"
-          onchange="DB.settings.dailyTarget=parseInt(this.value);DB.save();UI.queue=Queue.build(parseInt(this.value));UI.initStates();">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px"><span>3 light</span><span>6 balanced</span><span>15 intensive</span></div>
+    <div class="t-page" style="margin-bottom:16px">Settings</div>
+
+    <div class="settings-section">
+      <div class="settings-title">Appearance</div>
+      <div class="theme-grid">
+        <button class="theme-btn ${th==='dark'&&pa==='cool'?'active':''}" onclick="UI.setAppearance('dark','cool')">🌙 Dark · Cool</button>
+        <button class="theme-btn ${th==='dark'&&pa==='warm'?'active':''}" onclick="UI.setAppearance('dark','warm')">🌙 Dark · Warm</button>
+        <button class="theme-btn ${th==='light'&&pa==='cool'?'active':''}" onclick="UI.setAppearance('light','cool')">☀ Light · Cool</button>
+        <button class="theme-btn ${th==='light'&&pa==='warm'?'active':''}" onclick="UI.setAppearance('light','warm')">☀ Light · Warm</button>
       </div>
-      <div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Target exam year</div>
-        <div style="display:flex;gap:8px">
-          <button class="btn ${this.year===2027?'btn-p':'btn-g'}" onclick="UI.setYear(2027)">CSE 2027</button>
-          <button class="btn ${this.year===2028?'btn-p':'btn-g'}" onclick="UI.setYear(2028)">CSE 2028</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Study</div>
+      <div style="margin-bottom:12px">
+        <div class="setting-label" style="margin-bottom:6px">Daily chunk target: <strong id="td-disp">${t}</strong></div>
+        <input type="range" min="3" max="15" step="1" value="${t}" style="width:100%;accent-color:var(--accent)"
+          oninput="document.getElementById('td-disp').textContent=this.value"
+          onchange="DB.settings.dailyTarget=parseInt(this.value);DB.save();Queue.build(parseInt(this.value));UI.renderToday();">
+        <div style="display:flex;justify-content:space-between" class="t-meta"><span>3</span><span>6</span><span>15</span></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="setting-label">Exam year</div>
+        <div class="year-toggle">
+          <button class="ytbtn ${this.currentYear===2027?'active':''}" onclick="UI.setYear(2027)">2027</button>
+          <button class="ytbtn ${this.currentYear===2028?'active':''}" onclick="UI.setYear(2028)">2028</button>
         </div>
       </div>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:14px">Data</div>
+
+    <div class="settings-section">
+      <div class="settings-title">Data</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-g" onclick="UI.expData()">Export backup</button>
-        <label class="btn btn-g" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="UI.impData(event)"></label>
-        <button class="btn btn-r" onclick="UI.resetAll()">Reset all progress</button>
+        <button class="btn btn-ghost" onclick="UI.exportData()">Export backup</button>
+        <label class="btn btn-ghost" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="UI.importData(event)"></label>
+        <button class="btn btn-danger" onclick="UI.resetAll()">Reset all</button>
       </div>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px">About Myelocus</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.7">
-        Official UPSC syllabus · SM-2 SRS (4-point) · Interleaved queue · New/review distinction ·
-        Four source types · Bulk onboarding · Neuroscience battle plan<br>
-        <span style="color:var(--text3);font-size:12px;font-style:italic">v3 · "The locus where myelin forms."</span>
+
+    <div class="settings-section">
+      <div class="settings-title">About</div>
+      <div class="t-meta" style="line-height:1.8">
+        Myelocus v4 · User-built UPSC syllabus · SM-2 SRS (4-point) · Three-gap pipeline ·
+        Chunk-level activity logging · Resizable split pane · 4 theme combinations<br>
+        <em>"The locus where myelin forms."</em>
       </div>
     </div>`;
   },
 
-  expData() {
-    const b = new Blob([DB.export()], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
-    a.download = `myelocus_backup_${todayStr()}.json`; a.click();
-  },
-
-  impData(e) {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => { try { DB.import(ev.target.result); this.init(); this.toast('Imported ✓'); } catch { this.toast('Invalid file'); } };
-    r.readAsText(f);
-  },
-
-  resetAll() {
-    if (!confirm('Reset all progress? Cannot be undone.')) return;
-    localStorage.removeItem('myelocus_v3'); localStorage.removeItem('myelocus_additions');
-    DB.load(); Additions.load(); this.init(); this.toast('Progress reset');
-  }
+  setAppearance(theme, palette) { DB.settings.theme=theme; DB.settings.palette=palette; DB.save(); this.applyTheme(); this.renderSettings(); },
+  exportData() { const b=new Blob([DB.export()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`myelocus_backup_${todayStr()}.json`; a.click(); },
+  importData(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{DB.import(ev.target.result);this.init();this.toast('Imported ✓');}catch{this.toast('Invalid file');} }; r.readAsText(f); },
+  resetAll() { if(!confirm('Reset all progress?')) return; localStorage.removeItem('myelocus_v4'); localStorage.removeItem('myelocus_queue_v4'); DB.load(); Queue.build(6); this.init(); this.toast('Reset ✓'); }
 };
 
+// Boot
 UI.init();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>

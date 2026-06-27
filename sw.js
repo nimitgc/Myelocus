@@ -1,5 +1,5 @@
-const CACHE = 'myelocus-v3';
-const ASSETS = ['/', '/index.html', '/styles.css', '/app.js', '/syllabus.js', '/manifest.json', '/icon-192.svg', '/icon-512.svg'];
+const CACHE = 'myelocus-v4';
+const ASSETS = ['/', '/index.html', '/styles.css', '/engine.js', '/ui.js', '/chunks.json', '/manifest.json', '/icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -9,16 +9,12 @@ self.addEventListener('activate', e => {
   ).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('anthropic.com')) return;
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (!res || res.status !== 200 || res.type !== 'basic') return res;
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match('/index.html'));
-    })
+    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+      if (!res || res.status !== 200 || res.type !== 'basic') return res;
+      const clone = res.clone();
+      caches.open(CACHE).then(c => c.put(e.request, clone));
+      return res;
+    }).catch(() => caches.match('/index.html')))
   );
 });
