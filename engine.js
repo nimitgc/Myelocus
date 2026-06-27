@@ -66,6 +66,11 @@ const DB = {
       const raw=localStorage.getItem('myelocus_v4');
       if (raw) { const p=JSON.parse(raw); this.records=p.records||{}; this.userSyllabus=p.userSyllabus||{}; this.coaching=p.coaching||{}; this.settings={...this.settings,...(p.settings||{})}; this.activity=p.activity||{}; }
     } catch(e) {}
+    // Seed DEFAULT_SYLLABUS on first run if syllabus is empty
+    if (typeof DEFAULT_SYLLABUS !== 'undefined' && Object.keys(this.userSyllabus).length === 0) {
+      this.userSyllabus = JSON.parse(JSON.stringify(DEFAULT_SYLLABUS));
+      this.save();
+    }
     this.updateStreak();
   },
   save() {
