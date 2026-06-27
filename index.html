@@ -15,7 +15,7 @@
 
   <!-- HEADER -->
   <header class="header">
-    <div class="logo">
+    <div class="logo" onclick="UI.go('today')" style="cursor:pointer">
       <div class="logo-mark">
         <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="7" cy="7" r="6" stroke="white" stroke-width="1.2" opacity=".3"/>
@@ -282,8 +282,6 @@ const UI = {
     const pace = Plan.pace(this.currentYear);
     const wd = Plan.weekDone();
     const stats = Analytics.globalStats();
-    const SC = ['','#f87171','#fbbf24','#3b82f6','#4ade80'];
-    const SL = ['','Again','Hard','Good','Easy'];
 
     let qH = '';
     if (total === 0) {
@@ -311,7 +309,6 @@ const UI = {
       Queue.current.forEach((item, idx) => {
         const st = Queue.cardStates[idx] || { done:false, score:null, open:false };
         const rec = DB.getRecord(item.chunk.id) || {};
-        const isNew = SRS.isNew(DB.getRecord(item.chunk.id)) && !st.done;
         const paper = PAPERS[item.paperId];
         const g2c = SRS.gapClass(rec.gap2Remaining);
         const g3c = SRS.gapClass(rec.gap3Remaining);
@@ -327,36 +324,11 @@ const UI = {
               <div class="gdot ${g3c}" title="PYQ attempted"></div>
             </div>
             <span class="qpaper-badge" style="background:${paper.color}20;color:${paper.color}">${paper.label}</span>
-            ${st.done && st.score ? `<span class="qscore-badge" style="color:${SC[st.score]}">${SL[st.score]}</span>` : `<span class="qtype-badge">${isNew?'New':'Review'}</span>`}
             <span class="qarr">${st.open?'▴':'▾'}</span>
           </div>
           ${st.open ? `<div class="qbody">
-            ${isNew ? `<div class="study-prompt">
-              <div class="study-msg">First time seeing this chunk. Go study it — coaching notes, NCERT, or any source. Come back when done.</div>
-              <button class="study-btn" onclick="UI.markStudied(${idx})">✓ Done — I have studied this</button>
-              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Already studied this before? Set your existing progress:</div>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                  <select class="field" id="seed-conf-${idx}" style="flex:1;min-width:120px;padding:4px 8px;font-size:11px">
-                    <option value="1">Again — very unclear</option>
-                    <option value="2">Hard — partially clear</option>
-                    <option value="3" selected>Good — mostly clear</option>
-                    <option value="4">Easy — fully clear</option>
-                  </select>
-                  <button class="btn btn-ghost btn-sm" onclick="UI.seedFromQueue(${idx})">Seed existing</button>
-                </div>
-              </div>
-            </div>` : `<div class="recall-section">
-              <div class="recall-label">Attempt recall without notes — how well did you remember?</div>
-              <div class="recall-btns">
-                <button class="rbtn ag ${st.score===1?'sel':''}" onclick="UI.rateCard(${idx},1)">Again<span class="rsub">Blank</span></button>
-                <button class="rbtn hd ${st.score===2?'sel':''}" onclick="UI.rateCard(${idx},2)">Hard<span class="rsub">Gaps</span></button>
-                <button class="rbtn gd ${st.score===3?'sel':''}" onclick="UI.rateCard(${idx},3)">Good<span class="rsub">Effort</span></button>
-                <button class="rbtn ez ${st.score===4?'sel':''}" onclick="UI.rateCard(${idx},4)">Easy<span class="rsub">Instant</span></button>
-              </div>
-            </div>`}
             <div class="activity-section">
-              <div class="activity-label">Log today's activity on this chunk</div>
+              <div class="activity-label">Log today's session on this chunk</div>
               <div class="activity-rows">
                 ${[['lecture','Lecture'],['ncert','NCERT'],['pyq-seen','PYQ seen'],['pyq-attempted','PYQ attempted'],['reference','Reference/Internet']].map(([key,label]) => `
                 <div class="activity-row">
@@ -370,9 +342,9 @@ const UI = {
                   </div>
                 </div>`).join('')}
               </div>
-              <div class="card-actions">
-                <button class="btn btn-primary btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
-                <button class="btn btn-ghost btn-sm" onclick="UI.openDetail('${item.chunk.id}')">Full detail →</button>
+              <div class="card-actions" style="display:flex;justify-content:space-between;align-items:center">
+                <button class="btn btn-ghost btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
+                <button class="btn btn-primary btn-sm" onclick="UI.doneCard(${idx})" style="margin-left:auto">Done ✓</button>
               </div>
             </div>
           </div>` : ''}
@@ -430,10 +402,69 @@ const UI = {
           <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--text3)">${stats.unseen}</div><div class="t-meta">unseen</div></div>
         </div>
       </div>
+      <div class="scard">
+        <div class="scard-t">Add any chunk to today</div>
+        <input class="field" type="text" id="chunk-search-inp" placeholder="Search chunks..." style="font-size:12px;padding:5px 8px;margin-bottom:6px"
+          oninput="UI.renderChunkSearch(this.value)">
+        <div id="chunk-search-results" style="max-height:180px;overflow-y:auto"></div>
+      </div>
     </div>`;
   },
 
   toggleCard(idx) { Queue.toggleCard(idx); this.renderToday(); },
+  doneCard(idx) {
+    // Save any checked activity first
+    const acts=[];
+    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`act-${idx}-${key}`); const mi=document.getElementById(`mins-${idx}-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
+    if (acts.length) Queue.logActivity(idx, acts);
+    Queue.cardStates[idx]={done:true,score:3,open:false}; Queue.saveState();
+    this.updateHeader(); this.updateNavPcts(); this.renderToday();
+    const totalMins = acts.reduce((s,a)=>s+a.mins,0);
+    this.toast(totalMins > 0 ? `Done ✓ — ${totalMins} mins logged` : 'Done ✓');
+  },
+
+  renderChunkSearch(query) {
+    const el = document.getElementById('chunk-search-results');
+    if (!el) return;
+    if (!query || query.length < 2) { el.innerHTML = '<div class="t-meta" style="padding:4px 0">Type to search all chunks</div>'; return; }
+    const q = query.toLowerCase();
+    const all = DB.getAllChunks();
+    const inQueue = new Set(Queue.current.map(i => i.chunk.id));
+    const matches = all.filter(({chunk}) => chunk.name.toLowerCase().includes(q) && !inQueue.has(chunk.id)).slice(0, 8);
+    if (!matches.length) { el.innerHTML = '<div class="t-meta" style="padding:4px 0">No results</div>'; return; }
+    el.innerHTML = matches.map(({chunk, paperId}) => {
+      const p = PAPERS[paperId];
+      return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="flex:1;font-size:12px;color:var(--text)">${chunk.name}</span>
+        <span style="font-size:10px;color:${p.color};background:${p.color}20;padding:1px 5px;border-radius:3px">${p.label}</span>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:11px" onclick="UI.addChunkToQueue('${chunk.id}','${paperId}')">+ Add</button>
+      </div>`;
+    }).join('');
+  },
+
+  addChunkToQueue(chunkId, paperId) {
+    // Find the full item
+    let found = null;
+    for (const subj of PAPERS[paperId].subjects) {
+      for (const bullet of DB.getBullets(paperId, subj.id)) {
+        const c = bullet.chunks.find(ch => ch.id === chunkId);
+        if (c) { found = { chunk: c, paperId, subjId: subj.id, bulletId: bullet.id }; break; }
+      }
+      if (found) break;
+    }
+    if (!found) return;
+    const newIdx = Queue.current.length;
+    Queue.current.push(found);
+    Queue.cardStates[newIdx] = { done: false, score: null, open: false };
+    Queue.saveState();
+    // Clear search
+    const inp = document.getElementById('chunk-search-inp');
+    if (inp) inp.value = '';
+    const res = document.getElementById('chunk-search-results');
+    if (res) res.innerHTML = '';
+    this.renderToday();
+    this.toast(`Added: ${found.chunk.name}`);
+  },
   markStudied(idx) { Queue.markStudied(idx); this.updateHeader(); this.updateNavPcts(); this.renderToday(); this.toast('Studied ✓'); },
   rateCard(idx, score) { Queue.rateCard(idx, score); this.updateHeader(); this.updateNavPcts(); this.renderToday(); const L=['','Again — tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated']; this.toast(L[score]); },
   toggleMins(idx, key) { const cb=document.getElementById(`act-${idx}-${key}`); const mw=document.getElementById(`amins-${idx}-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
@@ -534,15 +565,12 @@ const UI = {
                 else sc = 'strong';
               }
               return `<div class="chunk-row ${isSel?'selected':''}" onclick="UI.selectChunk('${chunk.id}')">
-                <div class="chunk-status ${sc}"></div>
                 <div class="chunk-name">${chunk.name}</div>
                 <div class="gap-dots">
                   <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
                   <div class="gdot ${SRS.gapClass(rec.gap2Remaining)}" title="PYQ seen"></div>
                   <div class="gdot ${SRS.gapClass(rec.gap3Remaining)}" title="PYQ attempted"></div>
                 </div>
-                ${SRS.totalAllMins(rec)>0?`<span class="chunk-time">${fmtMins(SRS.totalAllMins(rec))}</span>`:''}
-                <div class="str-mini"><div class="str-fill" style="width:${str}%;background:${paper.color}"></div></div>
                 <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteChunk('${paperId}','${subj.id}','${bullet.id}','${chunk.id}')" style="padding:2px 5px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
               </div>`;
             }).join('')}
@@ -808,26 +836,7 @@ const UI = {
       <div class="detail-label">Time invested — ${allMins > 0 ? fmtMins(allMins) + ' total' : 'nothing logged yet'}</div>
       ${allMins > 0 ? `<div class="time-summary">
         ${Object.entries(ML).map(([key,label])=>{ const m=totalM[key]||0; return m>0?`<div class="time-row"><span class="time-medium">${label}</span><span class="time-val">${fmtMins(m)}</span></div>`:''; }).join('')}
-      </div>` : `<div class="t-meta">Log activity from Today's queue or use the form below.</div>`}
-    </div>
-
-    <!-- Quick log from detail -->
-    <div class="detail-section">
-      <div class="detail-label">Log activity now</div>
-      <div class="activity-rows">
-        ${Object.entries(ML).map(([key,label])=>`
-        <div class="activity-row">
-          <label class="activity-check">
-            <input type="checkbox" id="dact-${key}" onchange="UI.toggleDetailMins('${key}')">
-            <span class="alabel">${label}</span>
-          </label>
-          <div class="activity-mins" id="damins-${key}" style="display:none">
-            <input class="mins-input" type="number" id="dmins-${key}" min="1" max="300" placeholder="0">
-            <span class="mins-label">min</span>
-          </div>
-        </div>`).join('')}
-      </div>
-      <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="UI.saveDetailActivity('${chunkId}')">Save activity</button>
+      </div>` : `<div class="t-meta">Log activity from Today's queue — open any chunk in today's queue to log time.</div>`}
     </div>
 
     <!-- Recent activity -->
@@ -902,46 +911,11 @@ const UI = {
     this.toast(L[val]||'Saved');
   },
 
-  toggleDetailMins(key) { const cb=document.getElementById(`dact-${key}`); const mw=document.getElementById(`damins-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
-  saveDetailActivity(chunkId) {
-    const acts=[];
-    ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`dact-${key}`); const mi=document.getElementById(`dmins-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
-    if (!acts.length) { this.toast('Nothing to save'); return; }
-    const rec = DB.getRecord(chunkId)||SRS.newRecord();
-    DB.setRecord(chunkId, SRS.logActivity(rec, acts));
-    this.renderChunkDetail(chunkId);
-    if (this.currentPage==='syllabus') this.renderSyllabus();
-    this.updateHeader(); this.updateNavPcts();
-    this.toast(`${acts.reduce((s,a)=>s+a.mins,0)} mins logged ✓`);
-  },
   saveCQ(chunkId) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); const val=document.getElementById('cq-inp')?.value||''; if(val!==rec.curiousQ){rec.curiousQ=val;DB.setRecord(chunkId,rec);this.toast('Question saved ✓');} },
   saveCQAnswered(chunkId,val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.curiousAnswered=val; DB.setRecord(chunkId,rec); },
   saveNotes(chunkId) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); const val=document.getElementById('notes-inp')?.value||''; if(val!==rec.notes){rec.notes=val;DB.setRecord(chunkId,rec);this.toast('Notes saved ✓');} },
 
-  seedExisting(chunkId) {
-    const conf = parseInt(document.getElementById('seed-conf')?.value || '3');
-    const rec = DB.getRecord(chunkId) || SRS.newRecord();
-    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr(), gap1Done: true }, conf);
-    DB.setRecord(chunkId, updated);
-    this.updateHeader(); this.updateNavPcts();
-    if (this.currentPage === 'syllabus') this.renderSyllabus();
-    this.renderChunkDetail(chunkId);
-    const L = ['','Again','Hard','Good','Easy'];
-    this.toast(`Seeded as ${L[conf]} ✓`);
-  },
 
-  seedFromQueue(idx) {
-    const item = this.queue[idx]; if (!item) return;
-    const conf = parseInt(document.getElementById(`seed-conf-${idx}`)?.value || '3');
-    const rec = DB.getRecord(item.chunk.id) || SRS.newRecord();
-    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr(), gap1Done: true }, conf);
-    DB.setRecord(item.chunk.id, updated);
-    Queue.cardStates[idx] = { done: true, score: conf, open: false };
-    Queue.saveState();
-    this.updateHeader(); this.updateNavPcts(); this.renderToday();
-    const L = ['','Again','Hard','Good','Easy'];
-    this.toast(`Seeded as ${L[conf]} ✓`);
-  },
 
   // ── PACE ─────────────────────────────────────────────────────────────────────
   renderPace() {
@@ -1023,6 +997,12 @@ const UI = {
       const paper = PAPERS[paperId];
       const ps = Analytics.paperStats(paperId);
       const isExp = !!this.expanded[`pace-${paperId}`];
+      // Cumulative lectures for this paper
+      let lTotal = 0, lDone = 0;
+      PAPERS[paperId].subjects.forEach(subj => { const ch = DB.getCoaching(paperId, subj.id); lTotal += ch.total || 0; lDone += ch.completed || 0; });
+      const lPct = lTotal > 0 ? Math.round(lDone / lTotal * 100) : null;
+      const lStr = lTotal > 0 ? `${lDone}/${lTotal} (${lPct}%)` : '—';
+      const lColor = lTotal === 0 ? 'var(--text3)' : lPct >= 80 ? 'var(--c-green)' : lPct >= 50 ? 'var(--c-amber)' : 'var(--c-red)';
       tableH += `<tr onclick="UI.togglePacePaper('${paperId}')" class="${isExp?'expanded':''}">
         <td class="paper-name-cell"><div class="nav-dot" style="background:${paper.color}"></div>${paper.label}<span style="font-size:10px;color:var(--text3);margin-left:4px">${isExp?'▴':'▾'}</span></td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="btrack" style="width:44px"><div class="bfill" style="width:${ps.cov}%;background:${paper.color}"></div></div>${ps.cov}%</div></td>
@@ -1030,7 +1010,7 @@ const UI = {
         <td style="color:${ps.gap1>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap1}/${ps.total}</td>
         <td style="color:${ps.gap2>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap2}/${ps.total}</td>
         <td style="color:${ps.gap3>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap3}/${ps.total}</td>
-        <td>—</td>
+        <td style="color:${lColor}">🎓 ${lStr}</td>
         <td>${fmtMins(ps.totalMins)}</td>
       </tr>`;
       if (isExp) {
