@@ -872,15 +872,17 @@ const UI = {
           const ss = Analytics.subjectStats(paperId, subj.id);
           const ch = DB.getCoaching(paperId, subj.id);
           const lectureStr = ch.total > 0 ? `${ch.completed}/${ch.total} (${Math.round(ch.completed/ch.total*100)}%)` : '—';
-          tableH += `<tr class="subj-expand-row"><td colspan="8"><div class="subj-row-inner">
-            <span class="subj-name-s">↳ ${subj.name}</span>
-            <span>${ss.cov}% covered</span>
-            <span>G1:${ss.gap1}/${ss.total}</span>
-            <span>G2:${ss.gap2}/${ss.total}</span>
-            <span>G3:${ss.gap3}/${ss.total}</span>
-            <span style="color:${ch.total>0?'var(--c-green)':'var(--text3)'}">🎓 ${lectureStr}</span>
-            <span>${fmtMins(ss.totalMins)}</span>
-          </div></td></tr>`;
+          const lectureColor = ch.total > 0 ? 'var(--c-green)' : 'var(--text3)';
+          tableH += `<tr class="subj-expand-row">
+            <td style="padding-left:24px;color:var(--text2)">↳ ${subj.name}</td>
+            <td><div style="display:flex;align-items:center;gap:5px"><div class="btrack" style="width:36px"><div class="bfill" style="width:${ss.cov}%;background:${paper.color}"></div></div>${ss.cov}%</div></td>
+            <td>${ss.studied}/${ss.total}</td>
+            <td>${ss.gap1}/${ss.total}</td>
+            <td>${ss.gap2}/${ss.total}</td>
+            <td>${ss.gap3}/${ss.total}</td>
+            <td style="color:${lectureColor}">🎓 ${lectureStr}</td>
+            <td>${fmtMins(ss.totalMins)}</td>
+          </tr>`;
         });
       }
     });

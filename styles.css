@@ -793,9 +793,8 @@ select.field { cursor: pointer; }
 .pace-table tr:hover td { background: var(--bg3); cursor: pointer; }
 .pace-table tr.expanded td { background: var(--accent-bg); }
 .paper-name-cell { font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.subj-expand-row td { background: var(--bg3); padding: 6px 12px 6px 28px; }
-.subj-row-inner { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-.subj-name-s { flex: 1; color: var(--text2); }
+.subj-expand-row td { background: var(--bg3); padding: 6px 12px; font-size: 11px; color: var(--text2); border-bottom: 1px solid var(--border); }
+.subj-expand-row td:first-child { font-weight: 500; }
 
 /* Pace numbers */
 .pace-numbers { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
