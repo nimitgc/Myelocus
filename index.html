@@ -668,6 +668,22 @@ const UI = {
     <div class="chunk-detail-name">${foundChunk.name}</div>
     <div class="chunk-detail-official">${foundBullet.official}</div>
 
+    <!-- Existing progress initialiser -->
+    ${!rec.firstStudied ? `<div class="detail-section" style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:12px 14px;">
+      <div class="detail-label" style="color:var(--accent)">Already studied this chunk?</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Set your existing progress — the SRS will seed itself from today.</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text2)">Confidence:</span>
+        <select class="field" id="seed-conf" style="flex:1;min-width:120px;padding:5px 8px;font-size:12px">
+          <option value="1">Again — very unclear</option>
+          <option value="2">Hard — partially clear</option>
+          <option value="3" selected>Good — mostly clear</option>
+          <option value="4">Easy — fully clear</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="UI.seedExisting('${chunkId}')">Mark as already studied</button>
+      </div>
+    </div>` : ''}
+
     <!-- Three gaps -->
     <div class="detail-section">
       <div class="detail-label">Learning pipeline</div>
@@ -807,6 +823,18 @@ const UI = {
   saveCQAnswered(chunkId,val) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); rec.curiousAnswered=val; DB.setRecord(chunkId,rec); },
   saveNotes(chunkId) { const rec=DB.getRecord(chunkId)||SRS.newRecord(); const val=document.getElementById('notes-inp')?.value||''; if(val!==rec.notes){rec.notes=val;DB.setRecord(chunkId,rec);this.toast('Notes saved ✓');} },
 
+  seedExisting(chunkId) {
+    const conf = parseInt(document.getElementById('seed-conf')?.value || '3');
+    const rec = DB.getRecord(chunkId) || SRS.newRecord();
+    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr() }, conf);
+    DB.setRecord(chunkId, updated);
+    this.updateHeader(); this.updateNavPcts();
+    if (this.currentPage === 'syllabus') this.renderSyllabus();
+    this.renderChunkDetail(chunkId);
+    const L = ['','Again','Hard','Good','Easy'];
+    this.toast(`Seeded as ${L[conf]} ✓`);
+  },
+
   // ── PACE ─────────────────────────────────────────────────────────────────────
   renderPace() {
     const year = this.currentYear;
@@ -821,6 +849,7 @@ const UI = {
         <th title="First exposure done">Gap 1</th>
         <th title="PYQ seen done">Gap 2</th>
         <th title="PYQ attempted done">Gap 3</th>
+        <th>Lectures</th>
         <th>Time</th>
       </tr></thead><tbody>`;
 
@@ -835,17 +864,21 @@ const UI = {
         <td style="color:${ps.gap1>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap1}/${ps.total}</td>
         <td style="color:${ps.gap2>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap2}/${ps.total}</td>
         <td style="color:${ps.gap3>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap3}/${ps.total}</td>
+        <td>—</td>
         <td>${fmtMins(ps.totalMins)}</td>
       </tr>`;
       if (isExp) {
         PAPERS[paperId].subjects.forEach(subj => {
           const ss = Analytics.subjectStats(paperId, subj.id);
-          tableH += `<tr class="subj-expand-row"><td colspan="7"><div class="subj-row-inner">
+          const ch = DB.getCoaching(paperId, subj.id);
+          const lectureStr = ch.total > 0 ? `${ch.completed}/${ch.total} (${Math.round(ch.completed/ch.total*100)}%)` : '—';
+          tableH += `<tr class="subj-expand-row"><td colspan="8"><div class="subj-row-inner">
             <span class="subj-name-s">↳ ${subj.name}</span>
             <span>${ss.cov}% covered</span>
             <span>G1:${ss.gap1}/${ss.total}</span>
             <span>G2:${ss.gap2}/${ss.total}</span>
             <span>G3:${ss.gap3}/${ss.total}</span>
+            <span style="color:${ch.total>0?'var(--c-green)':'var(--text3)'}">🎓 ${lectureStr}</span>
             <span>${fmtMins(ss.totalMins)}</span>
           </div></td></tr>`;
         });
