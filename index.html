@@ -826,7 +826,7 @@ const UI = {
   seedExisting(chunkId) {
     const conf = parseInt(document.getElementById('seed-conf')?.value || '3');
     const rec = DB.getRecord(chunkId) || SRS.newRecord();
-    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr() }, conf);
+    const updated = SRS.review({ ...rec, firstStudied: rec.firstStudied || todayStr(), gap1Done: true }, conf);
     DB.setRecord(chunkId, updated);
     this.updateHeader(); this.updateNavPcts();
     if (this.currentPage === 'syllabus') this.renderSyllabus();
