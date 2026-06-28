@@ -57,24 +57,62 @@ const SRS = {
 
 // ── DATABASE ──────────────────────────────────────────────────────────────────
 const DB = {
-  records:{}, userSyllabus:{}, coaching:{},
+  records:{}, userSyllabus:{}, coaching:{}, subjects:{},
   settings:{targetYear:2027,theme:'dark',palette:'cool',dailyTarget:6,streak:0,lastActiveDate:null},
   activity:{},
 
   load() {
     try {
       const raw=localStorage.getItem('myelocus_v4');
-      if (raw) { const p=JSON.parse(raw); this.records=p.records||{}; this.userSyllabus=p.userSyllabus||{}; this.coaching=p.coaching||{}; this.settings={...this.settings,...(p.settings||{})}; this.activity=p.activity||{}; }
+      if (raw) { const p=JSON.parse(raw); this.records=p.records||{}; this.userSyllabus=p.userSyllabus||{}; this.coaching=p.coaching||{}; this.subjects=p.subjects||{}; this.settings={...this.settings,...(p.settings||{})}; this.activity=p.activity||{}; }
     } catch(e) {}
     // Seed DEFAULT_SYLLABUS on first run if syllabus is empty
     if (typeof DEFAULT_SYLLABUS !== 'undefined' && Object.keys(this.userSyllabus).length === 0) {
       this.userSyllabus = JSON.parse(JSON.stringify(DEFAULT_SYLLABUS));
       this.save();
     }
+    // Seed editable subjects list from fixed PAPERS structure on first run / per paper
+    this.seedSubjects();
     this.updateStreak();
   },
+  // Subjects are user-editable and persisted here, seeded once from PAPERS.
+  seedSubjects() {
+    let changed=false;
+    PAPER_ORDER.forEach(paperId=>{
+      if (!Array.isArray(this.subjects[paperId])) {
+        this.subjects[paperId]=(PAPERS[paperId].subjects||[]).map(s=>({id:s.id,name:s.name}));
+        changed=true;
+      }
+    });
+    if (changed) this.save();
+  },
   save() {
-    try { localStorage.setItem('myelocus_v4',JSON.stringify({records:this.records,userSyllabus:this.userSyllabus,coaching:this.coaching,settings:this.settings,activity:this.activity})); } catch(e) {}
+    try { localStorage.setItem('myelocus_v4',JSON.stringify({records:this.records,userSyllabus:this.userSyllabus,coaching:this.coaching,subjects:this.subjects,settings:this.settings,activity:this.activity})); } catch(e) {}
+  },
+
+  // ── SUBJECTS (editable) ──
+  getSubjects(paperId) { return this.subjects[paperId]||[]; },
+  addSubject(paperId,name) {
+    if (!Array.isArray(this.subjects[paperId])) this.subjects[paperId]=[];
+    const s={id:uid(),name}; this.subjects[paperId].push(s);
+    if (!this.userSyllabus[paperId]) this.userSyllabus[paperId]={};
+    if (!this.userSyllabus[paperId][s.id]) this.userSyllabus[paperId][s.id]={bullets:[]};
+    this.save(); return s;
+  },
+  updateSubjectName(paperId,subjId,name) {
+    const s=(this.subjects[paperId]||[]).find(s=>s.id===subjId);
+    if (s) { s.name=name; this.save(); }
+  },
+  deleteSubject(paperId,subjId) {
+    // remove all chunk records under this subject
+    const subj=(this.userSyllabus[paperId]||{})[subjId];
+    if (subj && Array.isArray(subj.bullets)) {
+      subj.bullets.forEach(b=>(b.chunks||[]).forEach(c=>{ delete this.records[c.id]; }));
+    }
+    if (this.userSyllabus[paperId]) delete this.userSyllabus[paperId][subjId];
+    if (this.coaching[paperId]) delete this.coaching[paperId][subjId];
+    this.subjects[paperId]=(this.subjects[paperId]||[]).filter(s=>s.id!==subjId);
+    this.save();
   },
 
   getRecord(id) { return this.records[id]||null; },
@@ -100,6 +138,10 @@ const DB = {
     const b=this.getBullets(paperId,subjId).find(b=>b.id===bulletId);
     if (b) { b.label=label; this.save(); }
   },
+  updateBulletOfficial(paperId,subjId,bulletId,official) {
+    const b=this.getBullets(paperId,subjId).find(b=>b.id===bulletId);
+    if (b) { b.official=official; this.save(); }
+  },
   deleteBullet(paperId,subjId,bulletId) {
     const subj=(this.userSyllabus[paperId]||{})[subjId]; if (!subj) return;
     subj.bullets=subj.bullets.filter(b=>b.id!==bulletId); this.save();
@@ -108,6 +150,10 @@ const DB = {
   addChunk(paperId,subjId,bulletId,name) {
     const b=this.getBullets(paperId,subjId).find(b=>b.id===bulletId); if (!b) return null;
     const c={id:uid(),name}; b.chunks.push(c); this.save(); return c;
+  },
+  updateChunkName(paperId,subjId,bulletId,chunkId,name) {
+    const b=this.getBullets(paperId,subjId).find(b=>b.id===bulletId); if (!b) return;
+    const c=b.chunks.find(c=>c.id===chunkId); if (c) { c.name=name; this.save(); }
   },
   deleteChunk(paperId,subjId,bulletId,chunkId) {
     const b=this.getBullets(paperId,subjId).find(b=>b.id===bulletId); if (!b) return;
@@ -120,7 +166,7 @@ const DB = {
   getAllChunks() {
     const all=[];
     PAPER_ORDER.forEach(paperId=>{
-      PAPERS[paperId].subjects.forEach(subj=>{
+      this.getSubjects(paperId).forEach(subj=>{
         this.getBullets(paperId,subj.id).forEach(bullet=>{
           bullet.chunks.forEach(chunk=>all.push({paperId,subjId:subj.id,bulletId:bullet.id,chunk}));
         });
@@ -129,8 +175,8 @@ const DB = {
     return all;
   },
 
-  export() { return JSON.stringify({records:this.records,userSyllabus:this.userSyllabus,coaching:this.coaching,settings:this.settings,activity:this.activity,exportedAt:new Date().toISOString()},null,2); },
-  import(json) { const p=JSON.parse(json); this.records=p.records||{}; this.userSyllabus=p.userSyllabus||{}; this.coaching=p.coaching||{}; this.settings={...this.settings,...(p.settings||{})}; this.activity=p.activity||{}; this.save(); }
+  export() { return JSON.stringify({records:this.records,userSyllabus:this.userSyllabus,coaching:this.coaching,subjects:this.subjects,settings:this.settings,activity:this.activity,exportedAt:new Date().toISOString()},null,2); },
+  import(json) { const p=JSON.parse(json); this.records=p.records||{}; this.userSyllabus=p.userSyllabus||{}; this.coaching=p.coaching||{}; this.subjects=p.subjects||{}; this.settings={...this.settings,...(p.settings||{})}; this.activity=p.activity||{}; this.seedSubjects(); this.save(); }
 };
 
 // ── QUEUE ─────────────────────────────────────────────────────────────────────
@@ -203,7 +249,7 @@ const Plan = {
 const Analytics = {
   paperStats(paperId) {
     let total=0,studied=0,due=0,strong=0,gap1=0,gap2=0,gap3=0,totalMins=0;
-    PAPERS[paperId].subjects.forEach(subj=>{
+    DB.getSubjects(paperId).forEach(subj=>{
       DB.getBullets(paperId,subj.id).forEach(bullet=>{
         bullet.chunks.forEach(chunk=>{
           total++; const rec=DB.getRecord(chunk.id);

@@ -127,6 +127,18 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Danger confirm modal (subject deletion) -->
+<div class="danger-overlay" id="danger-modal">
+  <div class="danger-box">
+    <div class="danger-title">⚠ Delete subject</div>
+    <div class="danger-body" id="danger-modal-body"></div>
+    <div class="danger-actions">
+      <button class="btn btn-ghost" onclick="UI.cancelDeleteSubject()">Cancel</button>
+      <button class="btn danger-confirm-btn" onclick="UI.confirmDeleteSubject()">Delete subject</button>
+    </div>
+  </div>
+</div>
+
 <script src="syllabus.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -374,6 +386,12 @@ const UI = {
     // Right pane
     document.getElementById('today-right').innerHTML = `<div class="today-side">
       <div class="scard">
+        <div class="scard-t">Add any chunk to today</div>
+        <input class="field" type="text" id="chunk-search-inp" placeholder="Search chunks..." style="font-size:12px;padding:5px 8px;margin-bottom:6px"
+          oninput="UI.renderChunkSearch(this.value)">
+        <div id="chunk-search-results" style="max-height:180px;overflow-y:auto"></div>
+      </div>
+      <div class="scard">
         <div class="scard-t">Current phase</div>
         <div class="t-section" style="margin-bottom:4px">${phase?.name||'—'}</div>
         <div style="font-size:12px;color:var(--text2);line-height:1.5">${phase?.note||''}</div>
@@ -401,12 +419,6 @@ const UI = {
           <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--c-green)">${stats.strong}</div><div class="t-meta">strong</div></div>
           <div style="text-align:center"><div style="font-size:18px;font-weight:600;color:var(--text3)">${stats.unseen}</div><div class="t-meta">unseen</div></div>
         </div>
-      </div>
-      <div class="scard">
-        <div class="scard-t">Add any chunk to today</div>
-        <input class="field" type="text" id="chunk-search-inp" placeholder="Search chunks..." style="font-size:12px;padding:5px 8px;margin-bottom:6px"
-          oninput="UI.renderChunkSearch(this.value)">
-        <div id="chunk-search-results" style="max-height:180px;overflow-y:auto"></div>
       </div>
     </div>`;
   },
@@ -445,7 +457,7 @@ const UI = {
   addChunkToQueue(chunkId, paperId) {
     // Find the full item
     let found = null;
-    for (const subj of PAPERS[paperId].subjects) {
+    for (const subj of DB.getSubjects(paperId)) {
       for (const bullet of DB.getBullets(paperId, subj.id)) {
         const c = bullet.chunks.find(ch => ch.id === chunkId);
         if (c) { found = { chunk: c, paperId, subjId: subj.id, bulletId: bullet.id }; break; }
@@ -495,8 +507,7 @@ const UI = {
       ○ ◑ ● = first exposure / PYQ seen / PYQ attempted &nbsp;·&nbsp; Click chunk to open detail on right
     </div>`;
 
-    paper.subjects.forEach(subj => {
-      const sStats = Analytics.subjectStats(paperId, subj.id);
+    DB.getSubjects(paperId).forEach(subj => {
       const coaching = DB.getCoaching(paperId, subj.id);
       const cpct = coaching.total > 0 ? Math.round(coaching.completed/coaching.total*100) : 0;
       const subKey = `s-${paperId}-${subj.id}`;
@@ -505,10 +516,14 @@ const UI = {
 
       h += `<div class="subject-block">
         <div class="subject-hdr" onclick="UI.selectSubject('${paperId}','${subj.id}');UI.toggleKey('${subKey}',true)">
-          <span class="subject-name">${subj.name}</span>
+          <span class="subject-name" contenteditable="true" spellcheck="false"
+            onclick="event.stopPropagation()"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+            onblur="UI.saveSubjectName('${paperId}','${subj.id}',this.textContent.trim())"
+            title="Click to rename subject">${subj.name}</span>
           <div class="subject-meta">
-            ${sStats.total > 0 ? `<div class="btrack" style="width:56px"><div class="bfill" style="width:${sStats.cov}%;background:${paper.color}"></div></div>
-            <span class="subject-pct" style="color:${paper.color}">${sStats.cov}%</span>` : '<span class="t-meta">no chunks yet</span>'}
+            <button class="btn btn-ghost btn-sm subj-del-btn" title="Delete subject"
+              onclick="event.stopPropagation();UI.askDeleteSubject('${paperId}','${subj.id}')">🗑 Delete</button>
             <span class="subject-arr">${isOpen?'▴':'▾'}</span>
           </div>
         </div>
@@ -520,10 +535,11 @@ const UI = {
           <div class="coaching-inputs">
             <input class="cinp cinp-wide" type="text" placeholder="Academy name" value="${coaching.academy||''}"
               onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'academy')">
-            <input class="cinp cinp-num" type="number" min="0" placeholder="Total" value="${coaching.total||''}"
+            <span class="cinp-lbl">Total</span>
+            <input class="cinp cinp-num" type="number" min="0" placeholder="0" value="${coaching.total||''}"
               onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'total')">
-            <span class="t-meta">/</span>
-            <input class="cinp cinp-num" type="number" min="0" placeholder="Done" value="${coaching.completed||''}"
+            <span class="cinp-lbl">Done</span>
+            <input class="cinp cinp-num" type="number" min="0" placeholder="0" value="${coaching.completed||''}"
               onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'completed')">
             ${coaching.total > 0 ? `<span class="coaching-pct">${cpct}%</span>` : ''}
           </div>
@@ -537,14 +553,10 @@ const UI = {
 
           return `<div class="bullet-block">
             <div class="bullet-hdr" onclick="UI.toggleKey('${bulKey}',false)">
-              <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px"
-                  contenteditable="true" spellcheck="false"
-                  onblur="UI.saveBulletLabel('${paperId}','${subj.id}','${bullet.id}',this.textContent.trim())"
-                  onclick="event.stopPropagation()"
-                  title="Click to edit label">${bullet.label}</div>
-                <div class="bullet-official">${bullet.official}</div>
-              </div>
+              <div class="bullet-official-edit" contenteditable="true" spellcheck="false"
+                onblur="UI.saveBulletOfficial('${paperId}','${subj.id}','${bullet.id}',this.textContent.trim())"
+                onclick="event.stopPropagation()"
+                title="Click to edit the official bullet text">${bullet.official}</div>
               <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
                 ${bullet.chunks.length > 0 ? `<span class="t-meta">${covCount}/${bullet.chunks.length}</span>` : ''}
                 <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteBullet('${paperId}','${subj.id}','${bullet.id}')" style="padding:2px 6px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
@@ -555,17 +567,13 @@ const UI = {
             ${isBulOpen ? `
             ${bullet.chunks.map(chunk => {
               const rec = DB.getRecord(chunk.id) || {};
-              const str = SRS.strength(rec);
               const isSel = this.selectedChunkId === chunk.id;
-              let sc = 'unseen';
-              if (rec.firstStudied) {
-                if (rec.nextReview && rec.nextReview < todayStr()) sc = 'due';
-                else if ((rec.repetitions||0) < 2) sc = 'studying';
-                else if ((rec.lastScore||0) <= 2) sc = 'fragile';
-                else sc = 'strong';
-              }
               return `<div class="chunk-row ${isSel?'selected':''}" onclick="UI.selectChunk('${chunk.id}')">
-                <div class="chunk-name">${chunk.name}</div>
+                <div class="chunk-name" contenteditable="true" spellcheck="false"
+                  onclick="event.stopPropagation()"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                  onblur="UI.saveChunkName('${paperId}','${subj.id}','${bullet.id}','${chunk.id}',this.textContent.trim())"
+                  title="Click to rename chunk">${chunk.name}</div>
                 <div class="gap-dots">
                   <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
                   <div class="gdot ${SRS.gapClass(rec.gap2Remaining)}" title="PYQ seen"></div>
@@ -597,6 +605,13 @@ const UI = {
       </div>`;
     });
 
+    // Add subject
+    h += `<div class="add-subject-row">
+      <input class="field" type="text" id="si-${paperId}" placeholder="Add a new subject to ${paper.label}..." style="font-size:12px;padding:6px 10px"
+        onkeydown="if(event.key==='Enter'){UI.addSubject('${paperId}');event.preventDefault()}">
+      <button class="btn btn-ghost btn-sm" onclick="UI.addSubject('${paperId}')">+ Subject</button>
+    </div>`;
+
     document.getElementById('syllabus-left').innerHTML = h;
   },
 
@@ -608,6 +623,60 @@ const UI = {
 
   saveBulletLabel(paperId, subjId, bulletId, label) {
     if (label) DB.updateBulletLabel(paperId, subjId, bulletId, label);
+  },
+
+  saveBulletOfficial(paperId, subjId, bulletId, text) {
+    if (text) DB.updateBulletOfficial(paperId, subjId, bulletId, text);
+    else this.renderSyllabus();
+  },
+
+  saveChunkName(paperId, subjId, bulletId, chunkId, name) {
+    if (name) { DB.updateChunkName(paperId, subjId, bulletId, chunkId, name); if (this.selectedChunkId === chunkId) this.renderChunkDetail(chunkId); }
+    else this.renderSyllabus();
+  },
+
+  saveSubjectName(paperId, subjId, name) {
+    if (name) { DB.updateSubjectName(paperId, subjId, name); }
+    else this.renderSyllabus();
+  },
+
+  addSubject(paperId) {
+    const inp = document.getElementById(`si-${paperId}`);
+    const name = inp?.value?.trim();
+    if (!name) { this.toast('Enter a subject name'); return; }
+    DB.addSubject(paperId, name);
+    inp.value = '';
+    this.renderSyllabus(); this.updateNavPcts();
+    this.toast('Subject added ✓');
+  },
+
+  // Subject deletion uses a distinct red danger modal (not the browser confirm)
+  askDeleteSubject(paperId, subjId) {
+    const subj = DB.getSubjects(paperId).find(s => s.id === subjId);
+    const bullets = DB.getBullets(paperId, subjId);
+    const chunkCount = bullets.reduce((n, b) => n + (b.chunks?.length || 0), 0);
+    this._pendingSubjDelete = { paperId, subjId };
+    const modal = document.getElementById('danger-modal');
+    document.getElementById('danger-modal-body').innerHTML =
+      `Delete the subject <strong>"${subj ? subj.name : ''}"</strong>?<br><br>` +
+      `This permanently removes <strong>${bullets.length} bullet${bullets.length!==1?'s':''}</strong> and ` +
+      `<strong>${chunkCount} chunk${chunkCount!==1?'s':''}</strong> inside it, along with all their study progress, ` +
+      `coaching data, and SRS history. <span style="color:var(--c-red)">This cannot be undone.</span>`;
+    modal.classList.add('show');
+  },
+  cancelDeleteSubject() {
+    this._pendingSubjDelete = null;
+    document.getElementById('danger-modal').classList.remove('show');
+  },
+  confirmDeleteSubject() {
+    const p = this._pendingSubjDelete;
+    document.getElementById('danger-modal').classList.remove('show');
+    if (!p) return;
+    DB.deleteSubject(p.paperId, p.subjId);
+    this._pendingSubjDelete = null;
+    if (this.selectedSubject && this.selectedSubject.subjId === p.subjId) { this.selectedSubject = null; this.renderChunkDetail(null); }
+    this.updateHeader(); this.updateNavPcts(); this.renderSyllabus();
+    this.toast('Subject deleted');
   },
 
   saveCoaching(paperId, subjId, el, field) {
@@ -661,7 +730,7 @@ const UI = {
     const el = document.getElementById('chunk-detail');
     if (!el) return;
     const paper = PAPERS[paperId];
-    const subj = paper.subjects.find(s => s.id === subjId);
+    const subj = DB.getSubjects(paperId).find(s => s.id === subjId);
     if (!subj) return;
     const ss = Analytics.subjectStats(paperId, subjId);
     const ch = DB.getCoaching(paperId, subjId);
@@ -773,7 +842,7 @@ const UI = {
     // Find chunk
     let foundChunk=null, foundBullet=null, foundPaper=null, foundPaperId=null;
     for (const paperId of PAPER_ORDER) {
-      for (const subj of PAPERS[paperId].subjects) {
+      for (const subj of DB.getSubjects(paperId)) {
         for (const bullet of DB.getBullets(paperId, subj.id)) {
           const c = bullet.chunks.find(c => c.id === chunkId);
           if (c) { foundChunk=c; foundBullet=bullet; foundPaper=PAPERS[paperId]; foundPaperId=paperId; break; }
@@ -983,13 +1052,15 @@ const UI = {
     });
 
     // Table with subject expansion
+    const pctColor = (p, has) => !has ? 'var(--text3)' : p >= 80 ? 'var(--c-green)' : p >= 50 ? 'var(--c-amber)' : 'var(--c-red)';
     let tableH = `<table class="pace-table">
       <thead><tr>
-        <th>Paper</th><th>Coverage</th><th>Chunks</th>
-        <th title="First exposure done">Gap 1</th>
-        <th title="PYQ seen done">Gap 2</th>
-        <th title="PYQ attempted done">Gap 3</th>
-        <th>Lectures</th>
+        <th>Paper</th>
+        <th title="Lectures attended">Lectures %</th>
+        <th title="First exposure done">First exp. %</th>
+        <th title="PYQ seen done">PYQ seen %</th>
+        <th title="PYQ attempted done">PYQ att. %</th>
+        <th>Chunks</th>
         <th>Time</th>
       </tr></thead><tbody>`;
 
@@ -999,34 +1070,35 @@ const UI = {
       const isExp = !!this.expanded[`pace-${paperId}`];
       // Cumulative lectures for this paper
       let lTotal = 0, lDone = 0;
-      PAPERS[paperId].subjects.forEach(subj => { const ch = DB.getCoaching(paperId, subj.id); lTotal += ch.total || 0; lDone += ch.completed || 0; });
+      DB.getSubjects(paperId).forEach(subj => { const ch = DB.getCoaching(paperId, subj.id); lTotal += ch.total || 0; lDone += ch.completed || 0; });
       const lPct = lTotal > 0 ? Math.round(lDone / lTotal * 100) : null;
-      const lStr = lTotal > 0 ? `${lDone}/${lTotal} (${lPct}%)` : '—';
-      const lColor = lTotal === 0 ? 'var(--text3)' : lPct >= 80 ? 'var(--c-green)' : lPct >= 50 ? 'var(--c-amber)' : 'var(--c-red)';
+      const g1 = ps.total ? Math.round(ps.gap1/ps.total*100) : 0;
+      const g2 = ps.total ? Math.round(ps.gap2/ps.total*100) : 0;
+      const g3 = ps.total ? Math.round(ps.gap3/ps.total*100) : 0;
       tableH += `<tr onclick="UI.togglePacePaper('${paperId}')" class="${isExp?'expanded':''}">
         <td class="paper-name-cell"><div class="nav-dot" style="background:${paper.color}"></div>${paper.label}<span style="font-size:10px;color:var(--text3);margin-left:4px">${isExp?'▴':'▾'}</span></td>
-        <td><div style="display:flex;align-items:center;gap:6px"><div class="btrack" style="width:44px"><div class="bfill" style="width:${ps.cov}%;background:${paper.color}"></div></div>${ps.cov}%</div></td>
+        <td style="color:${pctColor(lPct||0, lTotal>0)}">🎓 ${lPct!==null?lPct+'%':'—'}</td>
+        <td style="color:${pctColor(g1, ps.total>0)}">${ps.total?g1+'%':'—'}</td>
+        <td style="color:${pctColor(g2, ps.total>0)}">${ps.total?g2+'%':'—'}</td>
+        <td style="color:${pctColor(g3, ps.total>0)}">${ps.total?g3+'%':'—'}</td>
         <td>${ps.studied}/${ps.total}</td>
-        <td style="color:${ps.gap1>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap1}/${ps.total}</td>
-        <td style="color:${ps.gap2>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap2}/${ps.total}</td>
-        <td style="color:${ps.gap3>=ps.total&&ps.total>0?'var(--c-green)':'var(--text2)'}">${ps.gap3}/${ps.total}</td>
-        <td style="color:${lColor}">🎓 ${lStr}</td>
         <td>${fmtMins(ps.totalMins)}</td>
       </tr>`;
       if (isExp) {
-        PAPERS[paperId].subjects.forEach(subj => {
+        DB.getSubjects(paperId).forEach(subj => {
           const ss = Analytics.subjectStats(paperId, subj.id);
           const ch = DB.getCoaching(paperId, subj.id);
-          const lectureStr = ch.total > 0 ? `${ch.completed}/${ch.total} (${Math.round(ch.completed/ch.total*100)}%)` : '—';
-          const lectureColor = ch.total > 0 ? 'var(--c-green)' : 'var(--text3)';
+          const slPct = ch.total > 0 ? Math.round(ch.completed/ch.total*100) : null;
+          const sg1 = ss.total ? Math.round(ss.gap1/ss.total*100) : 0;
+          const sg2 = ss.total ? Math.round(ss.gap2/ss.total*100) : 0;
+          const sg3 = ss.total ? Math.round(ss.gap3/ss.total*100) : 0;
           tableH += `<tr class="subj-expand-row">
             <td style="padding-left:24px;color:var(--text2)">↳ ${subj.name}</td>
-            <td><div style="display:flex;align-items:center;gap:5px"><div class="btrack" style="width:36px"><div class="bfill" style="width:${ss.cov}%;background:${paper.color}"></div></div>${ss.cov}%</div></td>
+            <td style="color:${pctColor(slPct||0, ch.total>0)}">🎓 ${slPct!==null?slPct+'%':'—'}</td>
+            <td>${ss.total?sg1+'%':'—'}</td>
+            <td>${ss.total?sg2+'%':'—'}</td>
+            <td>${ss.total?sg3+'%':'—'}</td>
             <td>${ss.studied}/${ss.total}</td>
-            <td>${ss.gap1}/${ss.total}</td>
-            <td>${ss.gap2}/${ss.total}</td>
-            <td>${ss.gap3}/${ss.total}</td>
-            <td style="color:${lectureColor}">🎓 ${lectureStr}</td>
             <td>${fmtMins(ss.totalMins)}</td>
           </tr>`;
         });
@@ -1058,7 +1130,7 @@ const UI = {
     <!-- Three-bar pipeline per paper -->
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
       <div class="detail-label" style="margin-bottom:14px">Pipeline by paper — the gap between bars is your preparation risk</div>
-      ${pipeH || '<div class="t-meta">No chunks added yet</div>'}
+      ${pipeH ? `<div class="pipe-grid">${pipeH}</div>` : '<div class="t-meta">No chunks added yet</div>'}
       <div style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:4px;border-radius:2px;background:var(--accent)"></div><span class="t-meta">First exposure</span></div>
         <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:4px;border-radius:2px;background:var(--c-amber)"></div><span class="t-meta">PYQ seen</span></div>
