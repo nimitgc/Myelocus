@@ -296,10 +296,13 @@ const Plan = {
     return {days,unseen,total,studied,buffer,status,msg,target};
   },
   weekDone() {
+    // Distinct chunks advanced (rated or skipped) since Monday, across all scopes
     const today=new Date(),dow=today.getDay(),monday=new Date(today);
     monday.setDate(today.getDate()-(dow===0?6:dow-1));
     const ms=monday.toISOString().split('T')[0];
-    return Object.entries(DB.activity).filter(([d])=>d>=ms).reduce((s,[,v])=>s+v,0);
+    let n=0;
+    Object.values(DB.records).forEach(r=>{ if(r && r.lastStudied && r.lastStudied>=ms) n++; });
+    return n;
   },
   currentPhase(year) {
     const today=todayStr();

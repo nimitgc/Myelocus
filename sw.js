@@ -1,4 +1,4 @@
-const CACHE = 'myelocus-v7';
+const CACHE = 'myelocus-v8';
 const ASSETS = ['/', '/index.html', '/styles.css', '/engine.js', '/syllabus.js', '/manifest.json', '/icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

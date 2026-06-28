@@ -531,7 +531,10 @@ const UI = {
     const paper = PAPERS[paperId];
     const pStats = Analytics.paperStats(paperId);
 
-    let h = `
+    let h = `<div class="syllabus-pane"
+      oncontextmenu="UI.onPaperContext(event,'${paperId}')"
+      ontouchstart="UI.onPaperTouchStart(event,'${paperId}')"
+      ontouchend="UI.onSubjTouchEnd()" ontouchmove="UI.onSubjTouchEnd()">
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
       <div class="t-page">${paper.label}</div>
       <div class="t-meta">${paper.full}</div>
@@ -540,7 +543,8 @@ const UI = {
       ${PAPER_ORDER.map(p => `<button class="ptab ${p===paperId?'active':''}" style="${p===paperId?'background:'+PAPERS[p].color+';border-color:'+PAPERS[p].color:''}" onclick="UI.goPaper('${p}')">${PAPERS[p].label}</button>`).join('')}
     </div>
     <div class="t-meta" style="margin-bottom:12px">
-      ○ ◑ ● = first exposure / PYQ seen / PYQ attempted &nbsp;·&nbsp; Click chunk to open detail on right
+      ○ ◑ ● = first exposure / PYQ seen / PYQ attempted &nbsp;·&nbsp; Click chunk to open detail on right<br>
+      <span style="color:var(--accent)">Right-click</span> (or long-press) any item to add or delete · drag ⠿ to reorder subjects
     </div>`;
 
     DB.getSubjects(paperId).forEach(subj => {
@@ -573,22 +577,6 @@ const UI = {
         </div>
 
         ${isOpen ? `
-        <!-- Coaching row -->
-        <div class="coaching-row">
-          <span class="coaching-label">🎓 Coaching</span>
-          <div class="coaching-inputs">
-            <input class="cinp cinp-wide" type="text" placeholder="Academy name" value="${coaching.academy||''}"
-              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'academy')">
-            <span class="cinp-lbl">Total</span>
-            <input class="cinp cinp-num" type="number" min="0" placeholder="0" value="${coaching.total||''}"
-              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'total')">
-            <span class="cinp-lbl">Done</span>
-            <input class="cinp cinp-num" type="number" min="0" placeholder="0" value="${coaching.completed||''}"
-              onchange="UI.saveCoaching('${paperId}','${subj.id}',this,'completed')">
-            ${coaching.total > 0 ? `<span class="coaching-pct">${cpct}%</span>` : ''}
-          </div>
-        </div>
-
         <!-- Bullets -->
         ${bullets.map(bullet => {
           const bulKey = `b-${bullet.id}`;
@@ -596,15 +584,18 @@ const UI = {
           const covCount = bullet.chunks.filter(c => DB.getRecord(c.id)?.firstStudied).length;
 
           return `<div class="bullet-block">
-            <div class="bullet-hdr" onclick="UI.toggleKey('${bulKey}',false)">
+            <div class="bullet-hdr"
+              oncontextmenu="UI.onBulletContext(event,'${paperId}','${subj.id}','${bullet.id}')"
+              ontouchstart="UI.onBulletTouchStart(event,'${paperId}','${subj.id}','${bullet.id}')"
+              ontouchend="UI.onSubjTouchEnd()" ontouchmove="UI.onSubjTouchEnd()"
+              onclick="UI.toggleKey('${bulKey}',false)">
               <div class="bullet-official-edit" contenteditable="true" spellcheck="false"
                 onblur="UI.saveBulletOfficial('${paperId}','${subj.id}','${bullet.id}',this.textContent.trim())"
                 onclick="event.stopPropagation()"
-                title="Click to edit the official bullet text">${bullet.official}</div>
+                title="Click to edit · right-click for options">${bullet.official}</div>
               <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
                 ${bullet.chunks.length > 0 ? `<span class="t-meta">${covCount}/${bullet.chunks.length}</span>` : ''}
-                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteBullet('${paperId}','${subj.id}','${bullet.id}')" style="padding:2px 6px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
-                <span class="bullet-arr">${isBulOpen?'▴':'▾'}</span>
+                <span class="bullet-arr">${isBulOpen?'▾':'▸'}</span>
               </div>
             </div>
 
@@ -612,61 +603,48 @@ const UI = {
             ${bullet.chunks.map(chunk => {
               const rec = DB.getRecord(chunk.id) || {};
               const isSel = this.selectedChunkId === chunk.id;
-              return `<div class="chunk-row ${isSel?'selected':''}" onclick="UI.selectChunk('${chunk.id}')">
+              return `<div class="chunk-row ${isSel?'selected':''}"
+                oncontextmenu="UI.onChunkContext(event,'${paperId}','${subj.id}','${bullet.id}','${chunk.id}')"
+                ontouchstart="UI.onChunkTouchStart(event,'${paperId}','${subj.id}','${bullet.id}','${chunk.id}')"
+                ontouchend="UI.onSubjTouchEnd()" ontouchmove="UI.onSubjTouchEnd()"
+                onclick="UI.selectChunk('${chunk.id}')">
                 <div class="chunk-name" contenteditable="true" spellcheck="false"
                   onclick="event.stopPropagation()"
                   onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
                   onblur="UI.saveChunkName('${paperId}','${subj.id}','${bullet.id}','${chunk.id}',this.textContent.trim())"
-                  title="Click to rename chunk">${chunk.name}</div>
+                  title="Click to rename · right-click to delete">${chunk.name}</div>
                 <div class="gap-dots">
                   <div class="gdot ${rec.gap1Done?'done':''}" title="First exposure"></div>
                   <div class="gdot ${SRS.gapClass(rec.gap2Remaining)}" title="PYQ seen"></div>
                   <div class="gdot ${SRS.gapClass(rec.gap3Remaining)}" title="PYQ attempted"></div>
                 </div>
-                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();UI.deleteChunk('${paperId}','${subj.id}','${bullet.id}','${chunk.id}')" style="padding:2px 5px;font-size:10px;color:var(--c-red);border-color:var(--c-red)">✕</button>
               </div>`;
             }).join('')}
-
-            <!-- Add chunk -->
-            <div class="add-chunk-row">
-              <div class="add-chunk-form">
-                <input class="field" type="text" id="ci-${bullet.id}" placeholder="Add chunk — e.g. Industrial Revolution" style="font-size:12px;padding:5px 8px"
-                  onkeydown="if(event.key==='Enter'){UI.addChunk('${paperId}','${subj.id}','${bullet.id}');event.preventDefault()}">
-                <button class="btn btn-ghost btn-sm" onclick="UI.addChunk('${paperId}','${subj.id}','${bullet.id}')">+ Add</button>
-              </div>
-            </div>` : ''}
+            ${this.pendingAdd && this.pendingAdd.type==='chunk' && this.pendingAdd.bulletId===bullet.id ? this.renderAddInput('Add chunk — press Enter') : ''}
+            ` : ''}
           </div>`;
         }).join('')}
-
-        <!-- Add bullet -->
-        <div style="padding:8px 14px;border-top:1px solid var(--border)">
-          <div style="display:flex;gap:6px">
-            <input class="field" type="text" id="bi-${paperId}-${subj.id}" placeholder="Paste UPSC official bullet point here..." style="font-size:12px;padding:5px 8px"
-              onkeydown="if(event.key==='Enter'){UI.addBullet('${paperId}','${subj.id}');event.preventDefault()}">
-            <button class="btn btn-ghost btn-sm" onclick="UI.addBullet('${paperId}','${subj.id}')">+ Bullet</button>
-          </div>
-        </div>` : ''}
+        ${this.pendingAdd && this.pendingAdd.type==='bullet' && this.pendingAdd.subjId===subj.id ? `<div style="padding:8px 14px;border-top:1px solid var(--border)">${this.renderAddInput('Paste UPSC official bullet — press Enter')}</div>` : ''}
+        ` : ''}
       </div>`;
     });
 
-    // Add subject
-    h += `<div class="add-subject-row">
-      <input class="field" type="text" id="si-${paperId}" placeholder="Add a new subject to ${paper.label}..." style="font-size:12px;padding:6px 10px"
-        onkeydown="if(event.key==='Enter'){UI.addSubject('${paperId}');event.preventDefault()}">
-      <button class="btn btn-ghost btn-sm" onclick="UI.addSubject('${paperId}')">+ Subject</button>
-    </div>`;
+    // Add subject (on-demand, via right-click on the paper area)
+    if (this.pendingAdd && this.pendingAdd.type==='subject' && this.pendingAdd.paperId===paperId) {
+      h += `<div style="padding:10px 0">${this.renderAddInput(`Add a subject to ${paper.label} — press Enter`)}</div>`;
+    } else if (DB.getSubjects(paperId).length === 0) {
+      h += `<div class="t-meta" style="padding:16px 4px">No subjects yet — right-click here to add one.</div>`;
+    }
 
+    h += `</div>`; // close .syllabus-pane
     document.getElementById('syllabus-left').innerHTML = h;
+    if (this.pendingAdd) { const i = document.getElementById('pending-add-input'); if (i) { i.focus(); } }
   },
 
   toggleKey(key, isSubject) {
     this.expanded[key] = !this.expanded[key];
     if (isSubject) this.renderSyllabus();
     else this.renderSyllabus();
-  },
-
-  saveBulletLabel(paperId, subjId, bulletId, label) {
-    if (label) DB.updateBulletLabel(paperId, subjId, bulletId, label);
   },
 
   saveBulletOfficial(paperId, subjId, bulletId, text) {
@@ -682,16 +660,6 @@ const UI = {
   saveSubjectName(paperId, subjId, name) {
     if (name) { DB.updateSubjectName(paperId, subjId, name); }
     else this.renderSyllabus();
-  },
-
-  addSubject(paperId) {
-    const inp = document.getElementById(`si-${paperId}`);
-    const name = inp?.value?.trim();
-    if (!name) { this.toast('Enter a subject name'); return; }
-    DB.addSubject(paperId, name);
-    inp.value = '';
-    this.renderSyllabus(); this.updateNavPcts();
-    this.toast('Subject added ✓');
   },
 
   // Subject deletion uses a distinct red danger modal (not the browser confirm)
@@ -751,19 +719,13 @@ const UI = {
   },
 
   // ── Subject context menu (right-click + long-press) ──
-  onSubjContext(e, paperId, subjId) { e.preventDefault(); this.showSubjMenu(e.clientX, e.clientY, paperId, subjId); },
-  onSubjTouchStart(e, paperId, subjId) {
-    const t = e.touches ? e.touches[0] : e;
-    this.onSubjTouchEnd();
-    this._lpTimer = setTimeout(() => { this.showSubjMenu(t.clientX, t.clientY, paperId, subjId); if (navigator.vibrate) navigator.vibrate(12); }, 500);
-  },
   onSubjTouchEnd() { if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; } },
-  showSubjMenu(x, y, paperId, subjId) {
-    let menu = document.getElementById('subj-context-menu');
+  showCtxMenu(x, y, html) {
+    const menu = document.getElementById('subj-context-menu');
     if (!menu) return;
-    menu.innerHTML = `<button class="ctx-item ctx-danger" onclick="UI.ctxDeleteSubject('${paperId}','${subjId}')">🗑 Delete subject</button>`;
-    menu.style.left = Math.min(x, window.innerWidth - 190) + 'px';
-    menu.style.top = Math.min(y, window.innerHeight - 60) + 'px';
+    menu.innerHTML = html;
+    menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+    menu.style.top = Math.min(y, window.innerHeight - 110) + 'px';
     menu.classList.add('show');
     setTimeout(() => {
       document.addEventListener('click', UI._closeSubjMenu, { once: true });
@@ -773,48 +735,90 @@ const UI = {
   },
   _closeSubjMenu() { UI.hideSubjMenu(); },
   hideSubjMenu() { const m = document.getElementById('subj-context-menu'); if (m) m.classList.remove('show'); },
+  _ctxItem(label, fn, danger) { return `<button class="ctx-item ${danger?'ctx-danger':''}" onmousedown="event.preventDefault()" onclick="${fn}">${label}</button>`; },
+
+  // Subject
+  onSubjContext(e, paperId, subjId) { e.preventDefault(); e.stopPropagation(); this.showSubjMenu(e.clientX, e.clientY, paperId, subjId); },
+  onSubjTouchStart(e, paperId, subjId) { const t = e.touches ? e.touches[0] : e; this.onSubjTouchEnd(); this._lpTimer = setTimeout(() => { this.showSubjMenu(t.clientX, t.clientY, paperId, subjId); if (navigator.vibrate) navigator.vibrate(12); }, 500); },
+  showSubjMenu(x, y, paperId, subjId) {
+    this.showCtxMenu(x, y,
+      this._ctxItem('＋ Add bullet', `UI.ctxAddBullet('${paperId}','${subjId}')`, false) +
+      this._ctxItem('🗑 Delete subject', `UI.ctxDeleteSubject('${paperId}','${subjId}')`, true));
+  },
   ctxDeleteSubject(paperId, subjId) { this.hideSubjMenu(); this.askDeleteSubject(paperId, subjId); },
+
+  // Bullet
+  onBulletContext(e, paperId, subjId, bulletId) { e.preventDefault(); e.stopPropagation(); this.showBulletMenu(e.clientX, e.clientY, paperId, subjId, bulletId); },
+  onBulletTouchStart(e, paperId, subjId, bulletId) { const t = e.touches ? e.touches[0] : e; this.onSubjTouchEnd(); this._lpTimer = setTimeout(() => { this.showBulletMenu(t.clientX, t.clientY, paperId, subjId, bulletId); if (navigator.vibrate) navigator.vibrate(12); }, 500); },
+  showBulletMenu(x, y, paperId, subjId, bulletId) {
+    this.showCtxMenu(x, y,
+      this._ctxItem('＋ Add chunk', `UI.ctxAddChunk('${paperId}','${subjId}','${bulletId}')`, false) +
+      this._ctxItem('🗑 Delete bullet', `UI.ctxDeleteBullet('${paperId}','${subjId}','${bulletId}')`, true));
+  },
+  ctxDeleteBullet(paperId, subjId, bulletId) {
+    this.hideSubjMenu();
+    const bl = DB.getBullets(paperId, subjId).find(b => b.id === bulletId);
+    const n = bl ? bl.chunks.length : 0;
+    if (n > 0 && !confirm(`Delete this bullet and its ${n} chunk${n>1?'s':''} (with their progress)?`)) return;
+    DB.deleteBullet(paperId, subjId, bulletId);
+    this.renderSyllabus(); this.updateNavPcts(); this.toast('Bullet deleted');
+  },
+
+  // Chunk
+  onChunkContext(e, paperId, subjId, bulletId, chunkId) { e.preventDefault(); e.stopPropagation(); this.showChunkMenu(e.clientX, e.clientY, paperId, subjId, bulletId, chunkId); },
+  onChunkTouchStart(e, paperId, subjId, bulletId, chunkId) { const t = e.touches ? e.touches[0] : e; this.onSubjTouchEnd(); this._lpTimer = setTimeout(() => { this.showChunkMenu(t.clientX, t.clientY, paperId, subjId, bulletId, chunkId); if (navigator.vibrate) navigator.vibrate(12); }, 500); },
+  showChunkMenu(x, y, paperId, subjId, bulletId, chunkId) {
+    this.showCtxMenu(x, y, this._ctxItem('🗑 Delete chunk', `UI.ctxDeleteChunk('${paperId}','${subjId}','${bulletId}','${chunkId}')`, true));
+  },
+  ctxDeleteChunk(paperId, subjId, bulletId, chunkId) {
+    this.hideSubjMenu();
+    const rec = DB.getRecord(chunkId) || {};
+    const hasHistory = rec.firstStudied || (rec.repetitions||0) > 0 || (rec.activityLog && rec.activityLog.length > 0);
+    if (hasHistory && !confirm('This chunk has study history. Delete it and all its progress permanently?')) return;
+    DB.deleteChunk(paperId, subjId, bulletId, chunkId);
+    if (this.selectedChunkId === chunkId) { this.selectedChunkId = null; this.renderChunkDetail(null); }
+    this.renderSyllabus(); this.updateNavPcts(); this.toast('Chunk deleted');
+  },
+
+  // Paper area
+  onPaperContext(e, paperId) { e.preventDefault(); this.showPaperMenu(e.clientX, e.clientY, paperId); },
+  onPaperTouchStart(e, paperId) { const t = e.touches ? e.touches[0] : e; this.onSubjTouchEnd(); this._lpTimer = setTimeout(() => { this.showPaperMenu(t.clientX, t.clientY, paperId); if (navigator.vibrate) navigator.vibrate(12); }, 500); },
+  showPaperMenu(x, y, paperId) { this.showCtxMenu(x, y, this._ctxItem('＋ Add subject', `UI.ctxAddSubject('${paperId}')`, false)); },
+
+  // On-demand add inputs
+  ctxAddChunk(paperId, subjId, bulletId) { this.hideSubjMenu(); this.expanded[`s-${paperId}-${subjId}`] = true; this.expanded[`b-${bulletId}`] = true; this.pendingAdd = { type:'chunk', paperId, subjId, bulletId }; this.renderSyllabus(); },
+  ctxAddBullet(paperId, subjId) { this.hideSubjMenu(); this.expanded[`s-${paperId}-${subjId}`] = true; this.pendingAdd = { type:'bullet', paperId, subjId }; this.renderSyllabus(); },
+  ctxAddSubject(paperId) { this.hideSubjMenu(); this.pendingAdd = { type:'subject', paperId }; this.renderSyllabus(); },
+  renderAddInput(ph) {
+    return `<div class="inline-add">
+      <input class="field" id="pending-add-input" autocomplete="off" placeholder="${ph}" style="font-size:12px;padding:6px 10px;flex:1"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();UI.commitAdd()}else if(event.key==='Escape'){event.preventDefault();UI.cancelAdd()}">
+      <button class="btn btn-ghost btn-sm" onmousedown="event.preventDefault()" onclick="UI.commitAdd()">Add</button>
+      <button class="btn btn-ghost btn-sm" onmousedown="event.preventDefault()" onclick="UI.cancelAdd()">Close</button>
+    </div>`;
+  },
+  commitAdd() {
+    const inp = document.getElementById('pending-add-input');
+    const p = this.pendingAdd;
+    if (!inp || !p) return;
+    const val = inp.value.trim();
+    if (!val) { inp.focus(); return; }
+    if (p.type === 'chunk') { DB.addChunk(p.paperId, p.subjId, p.bulletId, val); }
+    else if (p.type === 'bullet') { DB.addBullet(p.paperId, p.subjId, val); }
+    else if (p.type === 'subject') { DB.addSubject(p.paperId, val); }
+    this.renderSyllabus(); this.updateNavPcts();
+    this.toast(`${p.type.charAt(0).toUpperCase()+p.type.slice(1)} added ✓ — keep typing or Close`);
+  },
+  cancelAdd() { this.pendingAdd = null; this.renderSyllabus(); },
+
 
 
   saveCoaching(paperId, subjId, el, field) {
     const c = DB.getCoaching(paperId, subjId);
-    c[field] = field === 'academy' ? el.value : parseInt(el.value) || 0;
+    c[field] = field === 'academy' ? el.value : Math.max(0, parseInt(el.value) || 0);
     DB.setCoaching(paperId, subjId, c);
-  },
-
-  addBullet(paperId, subjId) {
-    const inp = document.getElementById(`bi-${paperId}-${subjId}`);
-    const text = inp?.value?.trim();
-    if (!text) { this.toast('Enter the official bullet text'); return; }
-    DB.addBullet(paperId, subjId, text);
-    inp.value = '';
-    this.renderSyllabus();
-    this.toast('Bullet added ✓');
-  },
-
-  deleteBullet(paperId, subjId, bulletId) {
-    if (!confirm('Delete this bullet and all its chunks?')) return;
-    DB.deleteBullet(paperId, subjId, bulletId);
-    this.renderSyllabus();
-    this.toast('Deleted');
-  },
-
-  addChunk(paperId, subjId, bulletId) {
-    const inp = document.getElementById(`ci-${bulletId}`);
-    const name = inp?.value?.trim();
-    if (!name) { this.toast('Enter chunk name'); return; }
-    const chunk = DB.addChunk(paperId, subjId, bulletId, name);
-    inp.value = '';
-    this.renderSyllabus();
-    this.toast('Chunk added ✓');
-  },
-
-  deleteChunk(paperId, subjId, bulletId, chunkId) {
-    if (!confirm('Delete this chunk and all its progress?')) return;
-    DB.deleteChunk(paperId, subjId, bulletId, chunkId);
-    if (this.selectedChunkId === chunkId) { this.selectedChunkId = null; this.renderChunkDetail(null); }
-    this.updateHeader(); this.updateNavPcts(); this.renderSyllabus();
-    this.toast('Deleted');
+    this.updateNavPcts();
+    if (this.selectedSubject && this.selectedSubject.subjId === subjId) this.renderSubjectDetail(paperId, subjId);
   },
 
   selectSubject(paperId, subjId) {
@@ -844,21 +848,27 @@ const UI = {
     <div class="chunk-detail-name">${subj.name}</div>
     <div class="t-meta" style="margin-bottom:16px">${ss.total} chunks · ${ss.cov}% covered · ${fmtMins(ss.totalMins)} invested</div>
 
-    ${ch.total > 0 ? `
     <div class="detail-section">
       <div class="detail-label">Coaching lectures</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${ch.academy||'Academy'} — ${ch.completed} of ${ch.total} done</div>
-      <div class="btrack" style="height:8px;margin-bottom:4px">
+      <div class="coaching-detail">
+        <input class="cinp cinp-block" type="text" placeholder="Academy / source name" value="${ch.academy||''}"
+          onchange="UI.saveCoaching('${paperId}','${subjId}',this,'academy')">
+        <div class="coaching-detail-nums">
+          <label class="cinp-field"><span class="cinp-lbl">Total lectures</span>
+            <input class="cinp cinp-num2" type="number" min="0" placeholder="0" value="${ch.total||''}"
+              onchange="UI.saveCoaching('${paperId}','${subjId}',this,'total')"></label>
+          <label class="cinp-field"><span class="cinp-lbl">Completed</span>
+            <input class="cinp cinp-num2" type="number" min="0" placeholder="0" value="${ch.completed||''}"
+              onchange="UI.saveCoaching('${paperId}','${subjId}',this,'completed')"></label>
+        </div>
+      </div>
+      ${ch.total > 0 ? `
+      <div class="btrack" style="height:8px;margin:10px 0 4px">
         <div class="bfill" style="width:${cpct}%;background:${paper.color};height:100%"></div>
       </div>
-      <div style="font-size:11px;color:${cpct>=80?'var(--c-green)':cpct>=50?'var(--c-amber)':'var(--c-red)'}">
-        ${cpct}% complete
-      </div>
-    </div>` : `
-    <div class="detail-section">
-      <div class="detail-label">Coaching lectures</div>
-      <div class="t-meta">No coaching data yet — add from the subject header</div>
-    </div>`}
+      <div style="font-size:11px;color:${cpct>=80?'var(--c-green)':cpct>=50?'var(--c-amber)':'var(--c-red)'}">${cpct}% complete · ${ch.completed} of ${ch.total} lectures</div>`
+      : `<div class="t-meta" style="margin-top:8px">Enter your lecture counts to track coverage — this also drives which new chunks surface in your daily queue.</div>`}
+    </div>
 
     <div class="detail-section">
       <div class="detail-label">Learning pipeline</div>
