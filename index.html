@@ -139,6 +139,9 @@
   </div>
 </div>
 
+<!-- Subject right-click / long-press context menu -->
+<div id="subj-context-menu" class="ctx-menu"></div>
+
 <script src="syllabus.js"></script>
 <script src="engine.js"></script>
 <script>
@@ -157,7 +160,7 @@ const UI = {
     this.currentYear = DB.settings.targetYear || 2027;
     this.applyTheme();
     this.initSplitPane();
-    if (!Queue.restore()) Queue.build(DB.settings.dailyTarget || 6);
+    if (!Queue.restoreAll()) { Queue.build(Queue.targetFor('gs'),'gs'); Queue.build(Queue.targetFor('optional'),'optional'); }
     this.updateHeader();
     this.updateNavPcts();
     this.renderToday();
@@ -284,7 +287,7 @@ const UI = {
 
   // ── TODAY ────────────────────────────────────────────────────────────────────
   renderToday() {
-    const target = DB.settings.dailyTarget || 6;
+    const target = Queue.targetFor(Queue.active);
     const total = Queue.current.length;
     const done = Queue.doneCount();
     const pct = total > 0 ? Math.round(done / total * 100) : 0;
@@ -314,7 +317,7 @@ const UI = {
             <div class="ds"><div class="dsv" style="color:var(--c-amber)">🔥${DB.settings.streak||0}</div><div class="dsl">Streak</div></div>
             <div class="ds"><div class="dsv" style="color:var(--c-green)">${stats.strong}</div><div class="dsl">Strong</div></div>
           </div>
-          <button class="btn btn-ghost" onclick="Queue.build(${target});UI.renderToday();">Load more</button>
+          <button class="btn btn-ghost" onclick="UI.rebuildActive()">Load more</button>
         </div>`;
       }
 
@@ -336,6 +339,7 @@ const UI = {
               <div class="gdot ${g3c}" title="PYQ attempted"></div>
             </div>
             <span class="qpaper-badge" style="background:${paper.color}20;color:${paper.color}">${paper.label}</span>
+            <button class="qremove" title="Remove from today's list" onclick="event.stopPropagation();UI.removeCardUI(${idx})">×</button>
             <span class="qarr">${st.open?'▴':'▾'}</span>
           </div>
           ${st.open ? `<div class="qbody">
@@ -354,9 +358,18 @@ const UI = {
                   </div>
                 </div>`).join('')}
               </div>
-              <div class="card-actions" style="display:flex;justify-content:space-between;align-items:center">
-                <button class="btn btn-ghost btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
-                <button class="btn btn-primary btn-sm" onclick="UI.doneCard(${idx})" style="margin-left:auto">Done ✓</button>
+              <div class="recall-section">
+                <div class="recall-q">How well do you know this now?</div>
+                <div class="recall-btns">
+                  <button class="rbtn r-again" onclick="UI.rateCardUI(${idx},1)">Again</button>
+                  <button class="rbtn r-hard"  onclick="UI.rateCardUI(${idx},2)">Hard</button>
+                  <button class="rbtn r-good"  onclick="UI.rateCardUI(${idx},3)">Good</button>
+                  <button class="rbtn r-easy"  onclick="UI.rateCardUI(${idx},4)">Easy</button>
+                </div>
+                <div class="recall-foot">
+                  <button class="btn btn-ghost btn-sm" onclick="UI.saveActivity(${idx})">Save activity</button>
+                  <button class="btn btn-ghost btn-sm skip-btn" onclick="UI.skipCardUI(${idx})" title="First time reading this — just log time, no rating">Skip · first read →</button>
+                </div>
               </div>
             </div>
           </div>` : ''}
@@ -366,9 +379,13 @@ const UI = {
 
     // Left pane
     document.getElementById('today-left').innerHTML = `
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
       <div class="t-page">Today</div>
       <div class="t-meta">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div>
+    </div>
+    <div class="scope-toggle">
+      <button class="scope-seg ${Queue.active==='gs'?'active':''}" onclick="UI.setQueueScope('gs')">General Studies</button>
+      <button class="scope-seg ${Queue.active==='optional'?'active':''}" onclick="UI.setQueueScope('optional')">Optional</button>
     </div>
     <div class="session-ring-wrap">
       <svg width="44" height="44" viewBox="0 0 44 44">
@@ -378,8 +395,8 @@ const UI = {
           stroke-linecap="round" transform="rotate(-90 22 22)"
           style="transition:stroke-dashoffset 0.5s ease"/>
       </svg>
-      <div class="ring-info"><h3>${done} / ${total} done</h3><p>Interleaved · target ${target}</p></div>
-      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="Queue.build(${target});UI.renderToday();">↺ Refresh</button>
+      <div class="ring-info"><h3>${done} / ${total} done</h3><p>${Queue.active==='optional'?'Optional':'GS 1–4'} · target ${target}</p></div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="UI.rebuildActive()">↺ Refresh</button>
     </div>
     ${qH}`;
 
@@ -424,16 +441,37 @@ const UI = {
   },
 
   toggleCard(idx) { Queue.toggleCard(idx); this.renderToday(); },
-  doneCard(idx) {
-    // Save any checked activity first
+  // Collect any checked activity rows for a card and return [{medium,mins}]
+  flushActivity(idx) {
     const acts=[];
     ['lecture','ncert','pyq-seen','pyq-attempted','reference'].forEach(key=>{ const cb=document.getElementById(`act-${idx}-${key}`); const mi=document.getElementById(`mins-${idx}-${key}`); if(cb?.checked&&mi?.value) acts.push({medium:key,mins:parseInt(mi.value)||0}); });
     if (acts.length) Queue.logActivity(idx, acts);
-    Queue.cardStates[idx]={done:true,score:3,open:false}; Queue.saveState();
-    this.updateHeader(); this.updateNavPcts(); this.renderToday();
-    const totalMins = acts.reduce((s,a)=>s+a.mins,0);
-    this.toast(totalMins > 0 ? `Done ✓ — ${totalMins} mins logged` : 'Done ✓');
+    return acts.reduce((s,a)=>s+a.mins,0);
   },
+  rateCardUI(idx, score) {
+    const mins = this.flushActivity(idx);
+    Queue.rateCard(idx, score);
+    this.updateHeader(); this.updateNavPcts(); this.renderToday();
+    const L=['','Again — back tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated'];
+    this.toast(mins>0 ? `${L[score]} · ${mins} min logged` : L[score]);
+  },
+  skipCardUI(idx) {
+    const mins = this.flushActivity(idx);
+    Queue.skipCard(idx);
+    this.updateHeader(); this.updateNavPcts(); this.renderToday();
+    this.toast(mins>0 ? `First read logged · ${mins} min — returns tomorrow` : 'Marked as read — returns tomorrow');
+  },
+  removeCardUI(idx) {
+    Queue.removeCard(idx);
+    this.updateHeader(); this.renderToday();
+    this.toast('Removed from today');
+  },
+  setQueueScope(scope) {
+    Queue.setScope(scope);
+    if (Queue.current.length === 0) Queue.build(Queue.targetFor(scope), scope);
+    this.updateHeader(); this.renderToday();
+  },
+  rebuildActive() { Queue.build(Queue.targetFor(Queue.active), Queue.active); this.updateHeader(); this.updateNavPcts(); this.renderToday(); },
 
   renderChunkSearch(query) {
     const el = document.getElementById('chunk-search-results');
@@ -477,8 +515,6 @@ const UI = {
     this.renderToday();
     this.toast(`Added: ${found.chunk.name}`);
   },
-  markStudied(idx) { Queue.markStudied(idx); this.updateHeader(); this.updateNavPcts(); this.renderToday(); this.toast('Studied ✓'); },
-  rateCard(idx, score) { Queue.rateCard(idx, score); this.updateHeader(); this.updateNavPcts(); this.renderToday(); const L=['','Again — tomorrow','Hard — short interval','Good — interval grows','Easy — accelerated']; this.toast(L[score]); },
   toggleMins(idx, key) { const cb=document.getElementById(`act-${idx}-${key}`); const mw=document.getElementById(`amins-${idx}-${key}`); if(mw) mw.style.display=cb?.checked?'flex':'none'; },
   saveActivity(idx) {
     const acts=[];
@@ -514,16 +550,24 @@ const UI = {
       const isOpen = !!this.expanded[subKey];
       const bullets = DB.getBullets(paperId, subj.id);
 
-      h += `<div class="subject-block">
-        <div class="subject-hdr" onclick="UI.selectSubject('${paperId}','${subj.id}');UI.toggleKey('${subKey}',true)">
+      h += `<div class="subject-block" draggable="false"
+        ondragstart="UI.onSubjDragStart(event,'${paperId}','${subj.id}')"
+        ondragover="UI.onSubjDragOver(event)"
+        ondragleave="UI.onSubjDragLeave(event)"
+        ondrop="UI.onSubjDrop(event,'${paperId}','${subj.id}')"
+        ondragend="UI.onSubjDragEnd(event)">
+        <div class="subject-hdr"
+          oncontextmenu="UI.onSubjContext(event,'${paperId}','${subj.id}')"
+          ontouchstart="UI.onSubjTouchStart(event,'${paperId}','${subj.id}')"
+          ontouchend="UI.onSubjTouchEnd()" ontouchmove="UI.onSubjTouchEnd()"
+          onclick="UI.selectSubject('${paperId}','${subj.id}');UI.toggleKey('${subKey}',true)">
+          <span class="drag-grip" title="Drag to reorder" onmousedown="UI.gripDown(this)" onclick="event.stopPropagation()">⠿</span>
           <span class="subject-name" contenteditable="true" spellcheck="false"
             onclick="event.stopPropagation()"
             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
             onblur="UI.saveSubjectName('${paperId}','${subj.id}',this.textContent.trim())"
-            title="Click to rename subject">${subj.name}</span>
+            title="Click to rename · right-click for options">${subj.name}</span>
           <div class="subject-meta">
-            <button class="btn btn-ghost btn-sm subj-del-btn" title="Delete subject"
-              onclick="event.stopPropagation();UI.askDeleteSubject('${paperId}','${subj.id}')">🗑 Delete</button>
             <span class="subject-arr">${isOpen?'▴':'▾'}</span>
           </div>
         </div>
@@ -678,6 +722,59 @@ const UI = {
     this.updateHeader(); this.updateNavPcts(); this.renderSyllabus();
     this.toast('Subject deleted');
   },
+
+  // ── Subject drag-to-reorder (grip handle) ──
+  gripDown(el) { const b = el.closest('.subject-block'); if (b) b.setAttribute('draggable','true'); },
+  onSubjDragStart(e, paperId, subjId) {
+    this._dragSubj = { paperId, subjId };
+    try { e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', subjId); } catch(_) {}
+    e.currentTarget.classList.add('dragging');
+  },
+  onSubjDragOver(e) {
+    if (!this._dragSubj) return;
+    e.preventDefault(); try { e.dataTransfer.dropEffect='move'; } catch(_) {}
+    e.currentTarget.classList.add('drag-over');
+  },
+  onSubjDragLeave(e) { e.currentTarget.classList.remove('drag-over'); },
+  onSubjDrop(e, paperId, subjId) {
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+    const d = this._dragSubj;
+    if (d && d.paperId === paperId && d.subjId !== subjId) {
+      DB.moveSubject(paperId, d.subjId, subjId);
+      this.renderSyllabus(); this.updateNavPcts();
+    }
+  },
+  onSubjDragEnd() {
+    this._dragSubj = null;
+    document.querySelectorAll('.subject-block.dragging,.subject-block.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+    document.querySelectorAll('.subject-block[draggable="true"]').forEach(el=>el.setAttribute('draggable','false'));
+  },
+
+  // ── Subject context menu (right-click + long-press) ──
+  onSubjContext(e, paperId, subjId) { e.preventDefault(); this.showSubjMenu(e.clientX, e.clientY, paperId, subjId); },
+  onSubjTouchStart(e, paperId, subjId) {
+    const t = e.touches ? e.touches[0] : e;
+    this.onSubjTouchEnd();
+    this._lpTimer = setTimeout(() => { this.showSubjMenu(t.clientX, t.clientY, paperId, subjId); if (navigator.vibrate) navigator.vibrate(12); }, 500);
+  },
+  onSubjTouchEnd() { if (this._lpTimer) { clearTimeout(this._lpTimer); this._lpTimer = null; } },
+  showSubjMenu(x, y, paperId, subjId) {
+    let menu = document.getElementById('subj-context-menu');
+    if (!menu) return;
+    menu.innerHTML = `<button class="ctx-item ctx-danger" onclick="UI.ctxDeleteSubject('${paperId}','${subjId}')">🗑 Delete subject</button>`;
+    menu.style.left = Math.min(x, window.innerWidth - 190) + 'px';
+    menu.style.top = Math.min(y, window.innerHeight - 60) + 'px';
+    menu.classList.add('show');
+    setTimeout(() => {
+      document.addEventListener('click', UI._closeSubjMenu, { once: true });
+      document.addEventListener('contextmenu', UI._closeSubjMenu, { once: true });
+      window.addEventListener('scroll', UI._closeSubjMenu, { once: true, capture: true });
+    }, 0);
+  },
+  _closeSubjMenu() { UI.hideSubjMenu(); },
+  hideSubjMenu() { const m = document.getElementById('subj-context-menu'); if (m) m.classList.remove('show'); },
+  ctxDeleteSubject(paperId, subjId) { this.hideSubjMenu(); this.askDeleteSubject(paperId, subjId); },
+
 
   saveCoaching(paperId, subjId, el, field) {
     const c = DB.getCoaching(paperId, subjId);
@@ -1160,6 +1257,7 @@ const UI = {
   // ── SETTINGS ─────────────────────────────────────────────────────────────────
   renderSettings() {
     const t = DB.settings.dailyTarget || 6;
+    const ot = DB.settings.optionalTarget || 3;
     const th = DB.settings.theme || 'dark';
     const pa = DB.settings.palette || 'cool';
     document.getElementById('c-settings').innerHTML = `
@@ -1178,11 +1276,18 @@ const UI = {
     <div class="settings-section">
       <div class="settings-title">Study</div>
       <div style="margin-bottom:12px">
-        <div class="setting-label" style="margin-bottom:6px">Daily chunk target: <strong id="td-disp">${t}</strong></div>
+        <div class="setting-label" style="margin-bottom:6px">GS daily chunk target (GS 1–4): <strong id="td-disp">${t}</strong></div>
         <input type="range" min="3" max="15" step="1" value="${t}" style="width:100%;accent-color:var(--accent)"
           oninput="document.getElementById('td-disp').textContent=this.value"
-          onchange="DB.settings.dailyTarget=parseInt(this.value);DB.save();Queue.build(parseInt(this.value));UI.renderToday();">
+          onchange="DB.settings.dailyTarget=parseInt(this.value);DB.save();Queue.build(parseInt(this.value),'gs');if(Queue.active==='gs')UI.renderToday();">
         <div style="display:flex;justify-content:space-between" class="t-meta"><span>3</span><span>6</span><span>15</span></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="setting-label" style="margin-bottom:6px">Optional daily chunk target: <strong id="otd-disp">${ot}</strong></div>
+        <input type="range" min="1" max="12" step="1" value="${ot}" style="width:100%;accent-color:var(--accent)"
+          oninput="document.getElementById('otd-disp').textContent=this.value"
+          onchange="DB.settings.optionalTarget=parseInt(this.value);DB.save();Queue.build(parseInt(this.value),'optional');if(Queue.active==='optional')UI.renderToday();">
+        <div style="display:flex;justify-content:space-between" class="t-meta"><span>1</span><span>3</span><span>12</span></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="setting-label">Exam year</div>
@@ -1215,7 +1320,7 @@ const UI = {
   setAppearance(theme, palette) { DB.settings.theme=theme; DB.settings.palette=palette; DB.save(); this.applyTheme(); this.renderSettings(); },
   exportData() { const b=new Blob([DB.export()],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`myelocus_backup_${todayStr()}.json`; a.click(); },
   importData(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{DB.import(ev.target.result);this.init();this.toast('Imported ✓');}catch{this.toast('Invalid file');} }; r.readAsText(f); },
-  resetAll() { if(!confirm('Reset all progress?')) return; localStorage.removeItem('myelocus_v4'); localStorage.removeItem('myelocus_queue_v4'); DB.load(); Queue.build(6); this.init(); this.toast('Reset ✓'); }
+  resetAll() { if(!confirm('Reset all progress?')) return; localStorage.removeItem('myelocus_v4'); localStorage.removeItem('myelocus_queue_v5'); localStorage.removeItem('myelocus_queue_v4'); DB.load(); Queue.build(Queue.targetFor('gs'),'gs'); Queue.build(Queue.targetFor('optional'),'optional'); this.init(); this.toast('Reset ✓'); }
 };
 
 // Boot

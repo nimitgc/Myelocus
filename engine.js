@@ -58,7 +58,7 @@ const SRS = {
 // ── DATABASE ──────────────────────────────────────────────────────────────────
 const DB = {
   records:{}, userSyllabus:{}, coaching:{}, subjects:{},
-  settings:{targetYear:2027,theme:'dark',palette:'cool',dailyTarget:6,streak:0,lastActiveDate:null},
+  settings:{targetYear:2027,theme:'dark',palette:'cool',dailyTarget:6,optionalTarget:3,streak:0,lastActiveDate:null},
   activity:{},
 
   load() {
@@ -102,6 +102,12 @@ const DB = {
   updateSubjectName(paperId,subjId,name) {
     const s=(this.subjects[paperId]||[]).find(s=>s.id===subjId);
     if (s) { s.name=name; this.save(); }
+  },
+  moveSubject(paperId,fromId,toId) {
+    const arr=this.subjects[paperId]; if(!Array.isArray(arr)) return;
+    const from=arr.findIndex(s=>s.id===fromId), to=arr.findIndex(s=>s.id===toId);
+    if (from<0||to<0||from===to) return;
+    const [moved]=arr.splice(from,1); arr.splice(to,0,moved); this.save();
   },
   deleteSubject(paperId,subjId) {
     // remove all chunk records under this subject
@@ -180,14 +186,59 @@ const DB = {
 };
 
 // ── QUEUE ─────────────────────────────────────────────────────────────────────
+const QUEUE_SCOPES = { gs: ['gs1','gs2','gs3','gs4'], optional: ['optional'] };
+
 const Queue = {
-  current:[], cardStates:{},
-  build(target) {
-    const all=DB.getAllChunks(), due=[], newC=[];
+  active: 'gs',
+  data: { gs:{queue:[],states:{}}, optional:{queue:[],states:{}} },
+
+  // current/cardStates always proxy to the active scope (keeps call sites simple)
+  get current() { return this.data[this.active].queue; },
+  set current(v) { this.data[this.active].queue = v; },
+  get cardStates() { return this.data[this.active].states; },
+  set cardStates(v) { this.data[this.active].states = v; },
+
+  papersFor(scope) { return QUEUE_SCOPES[scope||this.active] || []; },
+  targetFor(scope) { return (scope||this.active)==='optional' ? (DB.settings.optionalTarget||3) : (DB.settings.dailyTarget||6); },
+  setScope(scope) { if (QUEUE_SCOPES[scope]) { this.active = scope; this.saveState(); } },
+
+  // Lecture-coverage weight for a subject: gradient %, floored at 5; no data => 5
+  subjectWeight(paperId, subjId) {
+    const c = DB.getCoaching(paperId, subjId);
+    if (!c || !c.total || c.total <= 0) return 5;
+    return Math.max(5, Math.round((c.completed||0) / c.total * 100));
+  },
+  // Weighted sampling without replacement over the new-chunk pool
+  weightedPick(pool, n) {
+    if (n <= 0 || pool.length === 0) return [];
+    const avail = pool.map(it => ({ it, w: this.subjectWeight(it.paperId, it.subjId) }));
+    const picked = [];
+    while (picked.length < n && avail.length > 0) {
+      const totalW = avail.reduce((s,x)=>s+x.w, 0);
+      let r = Math.random() * totalW, idx = 0;
+      for (; idx < avail.length; idx++) { r -= avail[idx].w; if (r <= 0) break; }
+      if (idx >= avail.length) idx = avail.length - 1;
+      picked.push(avail[idx].it); avail.splice(idx, 1);
+    }
+    return picked;
+  },
+
+  build(target, scope) {
+    scope = scope || this.active;
+    target = target || this.targetFor(scope);
+    const papers = QUEUE_SCOPES[scope] || [];
+    const all = DB.getAllChunks().filter(it => papers.includes(it.paperId));
+    const due=[], newC=[];
     all.forEach(item=>{ const rec=DB.getRecord(item.chunk.id); if(SRS.isDue(rec)) due.push({...item,rec,type:'review'}); else if(SRS.isNew(rec)) newC.push({...item,rec,type:'new'}); });
     due.sort((a,b)=>(a.rec?.nextReview||'2000').localeCompare(b.rec?.nextReview||'2000'));
-    const combined=[...due.slice(0,target),...newC.slice(0,Math.max(0,target-due.length))];
-    this.current=this.interleave(combined).slice(0,target); this.initStates(); this.saveState(); return this.current;
+    const dueSel = due.slice(0, target);
+    const newSel = this.weightedPick(newC, Math.max(0, target - dueSel.length));
+    const built = this.interleave([...dueSel, ...newSel]).slice(0, target);
+    this.data[scope].queue = built;
+    const states = {}; built.forEach((_,i)=>{ states[i]={done:false,score:null,open:false}; });
+    this.data[scope].states = states;
+    this.saveState();
+    return built;
   },
   interleave(items) {
     const g={}; items.forEach(i=>{ if(!g[i.paperId]) g[i.paperId]=[]; g[i.paperId].push(i); });
@@ -195,15 +246,41 @@ const Queue = {
     while(res.length<items.length){ const k=keys[i%keys.length]; if(g[k]?.length>0) res.push(g[k].shift()); i++; if(keys.every(k2=>!g[k2]?.length)) break; }
     return res;
   },
-  restore() {
-    try { const raw=localStorage.getItem('myelocus_queue_v4'); if(!raw) return false; const p=JSON.parse(raw); if(p.date!==todayStr()) return false; this.current=p.queue||[]; this.cardStates=p.states||{}; return this.current.length>0; } catch(e) { return false; }
+  restoreAll() {
+    try {
+      const raw=localStorage.getItem('myelocus_queue_v5'); if(!raw) return false;
+      const p=JSON.parse(raw); if(p.date!==todayStr()) return false;
+      if (p.data && p.data.gs && p.data.optional) this.data = p.data;
+      if (p.active && QUEUE_SCOPES[p.active]) this.active = p.active;
+      return true;
+    } catch(e) { return false; }
   },
-  saveState() { try { localStorage.setItem('myelocus_queue_v4',JSON.stringify({date:todayStr(),queue:this.current,states:this.cardStates})); } catch(e) {} },
-  initStates() { this.cardStates={}; this.current.forEach((_,i)=>{ this.cardStates[i]={done:false,score:null,open:false}; }); },
+  saveState() { try { localStorage.setItem('myelocus_queue_v5',JSON.stringify({date:todayStr(),active:this.active,data:this.data})); } catch(e) {} },
   doneCount() { return Object.values(this.cardStates).filter(s=>s.done).length; },
   toggleCard(idx) { const was=this.cardStates[idx]?.open; Object.keys(this.cardStates).forEach(k=>{this.cardStates[k].open=false;}); if(this.cardStates[idx]) this.cardStates[idx].open=!was; this.saveState(); },
+
   rateCard(idx,score) { const item=this.current[idx]; if(!item) return; const rec=DB.getRecord(item.chunk.id)||SRS.newRecord(); DB.setRecord(item.chunk.id,SRS.review(rec,score)); this.cardStates[idx]={done:true,score,open:false}; this.saveState(); },
-  markStudied(idx) { const item=this.current[idx]; if(!item) return; const rec=DB.getRecord(item.chunk.id)||SRS.newRecord(); DB.setRecord(item.chunk.id,SRS.review({...rec,firstStudied:rec.firstStudied||todayStr()},3)); this.cardStates[idx]={done:true,score:3,open:false}; this.saveState(); },
+  // Skip = first-time read: log exposure, schedule soon for first rated review, no score
+  skipCard(idx) {
+    const item=this.current[idx]; if(!item) return;
+    const rec=DB.getRecord(item.chunk.id)||SRS.newRecord();
+    const today=todayStr();
+    const r={...rec, activityLog:[...(rec.activityLog||[])]};
+    if(!r.firstStudied) r.firstStudied=today;
+    r.gap1Done=true; r.lastStudied=today;
+    r.interval=Math.max(1, r.interval||1);
+    if(!r.nextReview || r.nextReview<=today) r.nextReview=addDays(today,1);
+    DB.setRecord(item.chunk.id, r);
+    this.cardStates[idx]={done:true,score:'skip',open:false}; this.saveState();
+  },
+  removeCard(idx) {
+    const q=this.current; if(idx<0||idx>=q.length) return;
+    const old=this.cardStates; const oldLen=q.length;
+    q.splice(idx,1);
+    const ns={}; let j=0;
+    for (let i=0;i<oldLen;i++){ if(i===idx) continue; ns[j]=old[i]||{done:false,score:null,open:false}; j++; }
+    this.cardStates=ns; this.saveState();
+  },
   logActivity(idx,activities) { const item=this.current[idx]; if(!item) return; const rec=DB.getRecord(item.chunk.id)||SRS.newRecord(); DB.setRecord(item.chunk.id,SRS.logActivity(rec,activities)); this.saveState(); }
 };
 
